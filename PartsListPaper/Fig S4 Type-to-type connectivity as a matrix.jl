@@ -1,0 +1,90 @@
+# -*- coding: utf-8 -*-
+# ---
+# jupyter:
+#   jupytext:
+#     formats: ipynb,jl:percent
+#     text_representation:
+#       extension: .jl
+#       format_name: percent
+#       format_version: '1.3'
+#       jupytext_version: 1.16.2
+#   kernelspec:
+#     display_name: Julia 1.10.3
+#     language: julia
+#     name: julia-1.10
+# ---
+
+# %% [markdown]
+# # Figure S4. Type-to-type connectivity matrix
+
+# %%
+using OpticLobe
+
+# %% jupyter={"outputs_hidden": false}
+using JLD2
+using NamedArrays, SparseArrays
+using Plots
+using OrderedCollections
+using Measures
+
+# %% [markdown]
+# ## visualize matrix of synapse number
+
+# %%
+# reorder types by families
+orderedtypes = vcat(values(family2types)...)
+
+# %%
+I, J, vals = findnz(Wtt[orderedtypes, orderedtypes].array)
+
+# %%
+dotsizes = min.(sqrt.(vals), 60)/15  # nonlinear scaling to make weaker connections visible. strong connections saturate at a maximum dot size of four
+
+# %%
+# decided that this wasn't worth it, because some dots could become visible if reader zooms in
+# this threshold retains roughly half the dots, compressing the SVG file by about half
+# change `I[visible], J[visible], and dotsizes[visible]` in scatter plot below
+#visible = dotsizes .> 0.3
+#println("fraction of dots retained = ", sum(visible)/length(vals))
+
+# %%
+default(
+    fontfamily = "Helvetica",
+    label = ""
+    )
+
+# %%
+ntypes = length(orderedtypes)
+odd = 1:2:ntypes
+even = 2:2:ntypes
+
+# note J and I are transposed due to matrix layout
+#p = scatter(J[visible], I[visible], markersize = dotsizes[visible],
+p = scatter(J, I, markersize = dotsizes,
+    size = (1500, 1500), yflip = true, msc = :auto,
+    yticks = (1:2:length(orderedtypes), orderedtypes[1:2:end]), tickfontcolor = :red,
+    xticks = (1:2:length(orderedtypes), orderedtypes[1:2:end]), 
+    xrotation = 90,
+    xlim = (0, ntypes) .+ 0.5,
+    ylim = (0, ntypes) .+ 0.5,
+    grid = false,
+    ylabel = "presynaptic",
+    xlabel = "postsynaptic",
+    left_margin = 5mm,
+    guidefontsize = 14
+)
+scatter!(twinx(), [], [], yflip=true, ylim = (0, ntypes) .+ 0.5,
+    yticks = (2:2:length(orderedtypes), orderedtypes[2:2:end]), tickfontcolor = :green,
+)
+scatter!(twiny(), [], [], xlim = (0, ntypes) .+ 0.5,
+    xticks = (2:2:length(orderedtypes), orderedtypes[2:2:end]), tickfontcolor = :green,
+    xrotation = 90
+)
+hline!(p, odd, linealpha = 0.3, linecolor=:red)
+hline!(p, even, linealpha = 0.3, linecolor=:green)
+vline!(p, odd, linealpha = 0.3, linecolor=:red)
+vline!(p, even, linealpha = 0.3, linecolor=:green)
+
+# %%
+# savefig("/Users/sseung/sseung@princeton.edu/OpticLobeCellTypesPaper/panels/bigmatrixredgreenlabels.svg")
+savefig("Fig S4.svg")
