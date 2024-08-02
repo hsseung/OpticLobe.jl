@@ -119,7 +119,7 @@ classification = sort(CSV.read(datadep"Codex classification/classification.csv.g
 
 # %%
 # We assume that rows of `classification` have the canonical order, the same order as `neurons`
-tochange = ismissing.(ind2type) .&& classification.super_class .== "central"  # this could include some cells that are missing type annotations altogether, but that's OK
+tochange = ismissing.(ind2type) .&& (classification.super_class .== "central")  # this could include some cells that are missing type annotations altogether, but that's OK
 ind2type[tochange] = classification.hemibrain_type[tochange]
 
 # %%
