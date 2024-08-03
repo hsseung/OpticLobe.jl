@@ -86,5 +86,4 @@ vline!(p, odd, linealpha = 0.3, linecolor=:red)
 vline!(p, even, linealpha = 0.3, linecolor=:green)
 
 # %%
-# savefig("/Users/sseung/sseung@princeton.edu/OpticLobeCellTypesPaper/panels/bigmatrixredgreenlabels.svg")
-savefig("Fig S4.svg")
+savefig("Fig S4.pdf")

@@ -139,7 +139,7 @@ TARGETDIR = "Data S4"
     hh = vizclasspartners(family, 0.02)
     width, height = hh.attr[:size]
     display(hh) # populate the hh.o field, which is a SyncPlot object
-    PlotlyKaleido.savefig(joinpath(TARGETDIR, "$(join(family)).svg"), hh.o, height = height, width = width)
+    PlotlyKaleido.savefig(joinpath(TARGETDIR, "$(join(family)).pdf"), hh.o, height = height, width = width)
 end
 
 # %%

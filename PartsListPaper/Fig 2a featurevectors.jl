@@ -86,18 +86,17 @@ for i=1:3
 end
 display(p)
 
-# %% jupyter={"outputs_hidden": false}
-# savefig("/Users/sseung/sseung@princeton.edu/OpticLobeCellTypesPaper/panels/ThreeFeatureVectors.svg")
-savefig("Fig 2a.svg")
+savefig("Fig 2a three feature vectors.pdf")
 
 # %% [markdown]
 # ## Jaccard distances between three example cells
 
 # %% jupyter={"outputs_hidden": false}
-jaccard(Xi[:, Name.(ids[1])], Xi[:, Name.(ids[2])])
+d12 = jaccard(Xi[:, Name.(ids[1])], Xi[:, Name.(ids[2])])
+println("d12 = ", d12)
 
-# %% jupyter={"outputs_hidden": false}
-jaccard(Xi[:, Name.(ids[1])], Xi[:, Name.(ids[3])])
+d13 = jaccard(Xi[:, Name.(ids[1])], Xi[:, Name.(ids[3])])
+println("d13 = ", d13)
 
-# %% jupyter={"outputs_hidden": false}
-jaccard(Xi[:, Name.(ids[2])], Xi[:, Name.(ids[3])])
+d23 = jaccard(Xi[:, Name.(ids[2])], Xi[:, Name.(ids[3])])
+println("d23 = ", d23)

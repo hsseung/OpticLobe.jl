@@ -14,10 +14,16 @@
 
 module OpticLobe
 
-const PKG_ROOT = pkgdir(OpticLobe)
+const PKG_ROOT = pkgdir(@__MODULE__)
 const DATADIR = joinpath(PKG_ROOT, "data")
 
 ENV["DATADEPS_ALWAYS_ACCEPT"] = true
+
+# use dictionary as function
+# useful when broadcasting e.g. id2ind
+function (d::Dict)(key)
+    get(d, key, missing)
+end
 
 #include("githubdependencies.jl")
 #include("neurontable.jl")
@@ -28,7 +34,7 @@ include("cellids.jl")
 export ind2id, id2ind
 
 include("celltypes.jl")
-export intrinsictypes, boundarytypes, centraltypes, ind2type, visualtypes, alltypes
+export intrinsictypes, boundarytypes, centraltypes, ind2type, visualtypes, alltypes, ind2nt
 
 include("weightmatrix.jl")
 export W, A
@@ -56,4 +62,14 @@ export showall, strings2ticks, type2ids, convert2arrows
 println("codex and neuroglancer utilities")
 include("flywire.jl")
 export codex_open, ng_open, ng_hyper
+
+println("pq coordinates of columns")
+include("columncoordinates.jl")
+include("columncell.jl")
+#export column2pq, pq2column, columns_df
+export pq2column
+
+include("cellcoordinates.jl")
+export id2pq
+
 end

@@ -41,4 +41,6 @@ ind2id = neurons.root_id
 # ### dictionary for reverse lookup
 id2ind = Dict(ind2id .=> Int32.(1:length(ind2id)))
 
-(id2ind::Dict)(k) = id2ind[k]   # use as function when broadcasting over list of IDs
+# %%
+# neurotransmitter predictions
+ind2nt = passmissing(String).(neurons.nt_type)

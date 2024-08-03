@@ -1,12 +1,14 @@
 # OpticLobe
 
-Exploring the neurons and connections of the Drosophila optic lobe.
+Exploring the neurons and connections of the *Drosophila* optic lobe.
 
 [![Build Status](https://github.com/hsseung/OpticLobe.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/hsseung/OpticLobe.jl/actions/workflows/CI.yml?query=branch%3Amain)
 
-   It is based on data files that are downloadable from the FlyWire Codex.
+Code to accompany Matsliah, Yu, et al., 'Neuronal “parts list” and wiring diagram for a visual system'
 
-   See https://codex.flywire.ai for more information
+Version 783 of proofreading.
+
+See https://codex.flywire.ai for more information
 
 ## Synopsis
 
@@ -28,3 +30,48 @@ Y3        │ 20896
 LMa5      │ 17871
 Pm06      │ 17143
 ```
+
+## Global variables
+
+ind2id
+id2ind
+
+intrinsictypes
+boundarytypes
+centraltypes
+visualtypes
+alltypes
+ind2type 
+
+W
+A
+Ai
+
+Wtt
+Wct
+Wtc
+infraction
+outfraction
+inmean
+outmean
+
+class2families
+family2types
+
+## useful functions
+
+toppre
+toppost
+
+showall, strings2ticks, type2ids, convert2arrows
+
+codex_open
+
+ng_open
+
+ng_hyper
+
+## Installation
+Building the package downloads data files from the FlyWire Codex, and 
+processes the data to create some useful global variables.
+
