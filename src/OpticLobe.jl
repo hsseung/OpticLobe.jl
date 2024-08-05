@@ -34,10 +34,33 @@ include("cellids.jl")
 export ind2id, id2ind
 
 include("celltypes.jl")
-export intrinsictypes, boundarytypes, centraltypes, ind2type, visualtypes, alltypes, ind2nt
+export intrinsictypes, boundarytypes, centraltypes, ind2type, visualtypes, alltypes, ind2nt, A
 
-include("weightmatrix.jl")
-export W, A
+using Preferences
+function set_synapses(new_synapses::String)
+    if !(new_synapses in ("Buhmann", "Zetta"))
+        throw(ArgumentError("Invalid synapses version: \"$(new_synapses)\""))
+    end
+
+    # Set it in our runtime values, as well as saving it to disk at .julia/environments/v1.10/LocalPreferences.toml
+    @set_preferences!("synapses" => new_synapses)
+    @info("New version of synapses set; restart your Julia session for this change to take effect!")
+end
+export set_synapses
+
+const synapses = @load_preference("synapses", "Buhmann")
+
+# choose Buhmann (original) or Zetta synapses
+@static if synapses == "Buhmann"
+    include("weightmatrix.jl")
+elseif synapses == "Zetta"
+    using JLD2, LinearAlgebra
+    W = load("/Users/sseung/.julia/dev/OpticLobe/data/old/weightmatrix-v783.2.jld2", "WW")
+    W[diagind(W)] .= 0  # eliminate autapses
+else
+    return nothing
+end
+export W
 
 include("inoutaverages.jl")
 export Wtt, Wct, Wtc, infraction, outfraction, inmean, outmean
