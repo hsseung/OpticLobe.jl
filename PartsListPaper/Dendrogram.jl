@@ -321,7 +321,8 @@ default(; # Plots defaults
     )
 
 # %%
-c12 = distinguishable_colors(12, [RGB(1,1,1), RGB(0,0,0)], dropseed=true)
+# c12 = distinguishable_colors(12, [RGB(1,1,1), RGB(0,0,0)], dropseed=true)
+c12 = collect(palette(:mk_12)) # https://mk.bcgsc.ca/colorblind/
 
 # %%
 cmap = OffsetArray(vcat([RGB(0, 0, 0)], c12, c12, c12), 0:36)
@@ -331,7 +332,7 @@ plot(tree, treetype = :fan, linecolor = cmap[colorings], linewidth=2)
 
 # %%
 println("saving dendrogram with finer flat clustering")
-StatsPlots.savefig("Fig S10a TypePolarDendrogramFiner.svg")
+StatsPlots.savefig("Fig S10a TypePolarDendrogramFiner.pdf")
 
 # %% [markdown]
 # ## dendrogram with finest clusters
@@ -394,4 +395,4 @@ plot(tree, treetype = :fan, linecolor = cmap[colorings], linewidth=2)
 
 # %%
 println("saving dendrogram with finest flat clustering")
-StatsPlots.savefig("Fig S10b TypePolarDendrogramFinest.svg")
+StatsPlots.savefig("Fig S10b TypePolarDendrogramFinest.pdf")

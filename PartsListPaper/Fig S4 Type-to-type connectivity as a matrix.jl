@@ -50,8 +50,10 @@ dotsizes = min.(sqrt.(vals), 60)/15  # nonlinear scaling to make weaker connecti
 # %%
 default(
     fontfamily = "Helvetica",
-    label = ""
-    )
+    label = "",
+)
+
+cmap = palette(:tol_bright) # a Tol color scheme that is color blind safe
 
 # %%
 ntypes = length(orderedtypes)
@@ -62,28 +64,28 @@ even = 2:2:ntypes
 #p = scatter(J[visible], I[visible], markersize = dotsizes[visible],
 p = scatter(J, I, markersize = dotsizes,
     size = (1500, 1500), yflip = true, msc = :auto,
-    yticks = (1:2:length(orderedtypes), orderedtypes[1:2:end]), tickfontcolor = :red,
+    yticks = (1:2:length(orderedtypes), orderedtypes[1:2:end]), tickfontcolor = cmap[2],
     xticks = (1:2:length(orderedtypes), orderedtypes[1:2:end]), 
     xrotation = 90,
     xlim = (0, ntypes) .+ 0.5,
     ylim = (0, ntypes) .+ 0.5,
     grid = false,
-    ylabel = "presynaptic",
-    xlabel = "postsynaptic",
+    ylabel = "Presynaptic",
+    xlabel = "Postsynaptic",
     left_margin = 5mm,
     guidefontsize = 14
 )
 scatter!(twinx(), [], [], yflip=true, ylim = (0, ntypes) .+ 0.5,
-    yticks = (2:2:length(orderedtypes), orderedtypes[2:2:end]), tickfontcolor = :green,
+    yticks = (2:2:length(orderedtypes), orderedtypes[2:2:end]), tickfontcolor = cmap[3],
 )
 scatter!(twiny(), [], [], xlim = (0, ntypes) .+ 0.5,
-    xticks = (2:2:length(orderedtypes), orderedtypes[2:2:end]), tickfontcolor = :green,
+    xticks = (2:2:length(orderedtypes), orderedtypes[2:2:end]), tickfontcolor = cmap[3],
     xrotation = 90
 )
-hline!(p, odd, linealpha = 0.3, linecolor=:red)
-hline!(p, even, linealpha = 0.3, linecolor=:green)
-vline!(p, odd, linealpha = 0.3, linecolor=:red)
-vline!(p, even, linealpha = 0.3, linecolor=:green)
+hline!(p, odd, linealpha = 0.3, linecolor=cmap[2])
+hline!(p, even, linealpha = 0.3, linecolor=cmap[3])
+vline!(p, odd, linealpha = 0.3, linecolor=cmap[2])
+vline!(p, even, linealpha = 0.3, linecolor=cmap[3])
 
 # %%
 savefig("Fig S4.pdf")
