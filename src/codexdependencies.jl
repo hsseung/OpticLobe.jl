@@ -2,6 +2,20 @@ using DataDeps
 
 DOWNLOADS = "https://storage.googleapis.com/flywire-data/codex/data/783"
 
+register(DataDep("Codex cell stats",
+    """
+    Dataset: FlyWire v783
+    Author:
+    License:
+    Website: codex.flywire.ai
+
+    Citation: Matsliah et al.
+    """,
+    joinpath(DOWNLOADS, "cell_stats.csv.gz"),
+    "bd5879e1b5df964bea2f3ca5316348d4276ce2ccaac283f0e36583c04fbd3d8e"
+    ));
+
+
 register(DataDep("Codex neuron IDs",
     """
     Dataset: FlyWire v783

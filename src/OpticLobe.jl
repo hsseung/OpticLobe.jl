@@ -33,6 +33,9 @@ include("codexdependencies.jl")
 include("cellids.jl")
 export ind2id, id2ind
 
+include("cellstats.jl")
+export cell_length, cell_area, cell_volume
+
 include("celltypes.jl")
 export intrinsictypes, boundarytypes, centraltypes, ind2type, visualtypes, alltypes, ind2nt, A
 
