@@ -98,4 +98,19 @@ export pq2column
 include("cellcoordinates.jl")
 export id2pq
 
+include("hexgraphics.jl")
+export rect2hex, square2hex, crop, montage
+export triad, eyetriad, typetriad, celltriad
+export ellipsesummary
+export hexproject, drawpqaxes
+
+include("maptrace.jl")
+export tracebacktypes, inmaps, scorepath
+#export preimage, prepreimage, preprepreimage
+#export postimage
+
+include("spatial.jl")
+export findcenter, convcluster
+export seven
+
 end
