@@ -100,7 +100,7 @@ plot(familiesperclassbar, typesperclassbar, cellsperclassbar,
     guidefontsize = 16,)
 
 # %%
-savefig(joinpath(TARGETDIR, "FamiliesTypesCellsPerClass.svg"))
+savefig(joinpath(TARGETDIR, "FamiliesTypesCellsPerClass.pdf"))
 
 # %% [markdown]
 # ### right middle: number of cells and types per family
@@ -158,7 +158,7 @@ plot(b1, b2,
 )
 
 # %%
-savefig(joinpath(TARGETDIR, "CellTypesAndCellsPerFamily.svg"))
+savefig(joinpath(TARGETDIR, "CellTypesAndCellsPerFamily.pdf"))
 
 # %% [markdown]
 # ### right bottom: histogram of cells per type
@@ -187,7 +187,7 @@ cellspertypehist = histogram(
 )
 
 # %%
-savefig(joinpath(TARGETDIR, "DistributionLogCellNumberPerType.svg"))
+savefig(joinpath(TARGETDIR, "DistributionLogCellNumberPerType.pdf"))
 
 # %% [markdown]
 # ### combined right panel
@@ -209,7 +209,7 @@ hright = plot(
 # %%
 # this needs some padding adjustments to show up properly
 plot(hright, size = (400, 800))
-savefig(joinpath(TARGETDIR, "ClassFamilyTypeCell.svg"))
+savefig(joinpath(TARGETDIR, "ClassFamilyTypeCell.pdf"))
 
 # %% [markdown]
 # ## left panel: number of cells per type
@@ -263,7 +263,7 @@ hleft = plot(columns...,
 )
 
 # %%
-savefig(joinpath(TARGETDIR, "CellNumberVsTypeFourColumns.svg"))
+savefig(joinpath(TARGETDIR, "CellNumberVsTypeFourColumns.pdf"))
 #savefig(joinpath(TARGETDIR, "CellNumberVsTypeFiveColumns.svg"))
 
 # %% [markdown]
@@ -273,4 +273,4 @@ savefig(joinpath(TARGETDIR, "CellNumberVsTypeFourColumns.svg"))
 plot(hleft, hright, layout = @layout([a{0.66w} b{0.34w}]), size = (1200, 800), bottom_margin = 3mm)
 
 # %%
-savefig(joinpath(TARGETDIR, "Fig 1 bottom.svg"))
+savefig(joinpath(TARGETDIR, "Fig 1 bottom.pdf"))
