@@ -14,6 +14,9 @@
 
 module OpticLobe
 
+using NamedArrays
+export NamedArrays
+
 const PKG_ROOT = pkgdir(@__MODULE__)
 const DATADIR = joinpath(PKG_ROOT, "data")
 
