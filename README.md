@@ -4,7 +4,9 @@ Exploring the neurons and connections of the *Drosophila* optic lobe.
 
 [![Build Status](https://github.com/hsseung/OpticLobe.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/hsseung/OpticLobe.jl/actions/workflows/CI.yml?query=branch%3Amain)
 
-Code to accompany [Matsliah, Yu, et al., "Neuronal parts list and wiring diagram for a visual system"](https://doi.org/10.1038/s41586-024-07981-1) and [Seung, "Predicting visual function by interpreting a neuronal wiring diagram"](https://doi.org/10.1038/s41586-024-07953-5) 
+Code to accompany two visual system papers in the [FlyWire paper package](https://www.nature.com/collections/hgcfafejia).
+* [Matsliah, Yu, et al., "Neuronal parts list and wiring diagram for a visual system," *Nature* 634:166-180 (2024)](https://doi.org/10.1038/s41586-024-07981-1).
+* [Seung, "Predicting visual function by interpreting a neuronal wiring diagram," *Nature* 634:113-123 (2024)](https://doi.org/10.1038/s41586-024-07953-5). 
 
 Version 783 of proofreading.
 
