@@ -12,7 +12,7 @@ register(DataDep("Codex cell stats",
 
     Citation: Matsliah et al.
     """,
-    joinpath(DOWNLOADS, "cell_stats.csv.gz#1709735415919143"),
+    joinpath(DOWNLOADS, "cell_stats.csv.gz?generation=1709735415919143"),
     "bd5879e1b5df964bea2f3ca5316348d4276ce2ccaac283f0e36583c04fbd3d8e"
     ));
 
@@ -39,7 +39,7 @@ register(DataDep("Codex visual neuron types",
 
     Citation: Matsliah et al.
     """,
-    joinpath(DOWNLOADS, "visual_neuron_types.csv.gz#1720619193993712"),
+    joinpath(DOWNLOADS, "visual_neuron_types.csv.gz?generation=1720619193993712"),
     "4d6aee4af9f0aed3098a4eb91163508a61ded6363a3c441a7d50a5f6fcf5c366"
 ));
 
@@ -52,7 +52,7 @@ register(DataDep("Codex classification",
 
     Citation: Matsliah et al.
     """,
-    joinpath(DOWNLOADS, "classification.csv.gz#1721489294315289"),
+    joinpath(DOWNLOADS, "classification.csv.gz?generation=1721489294315289"),
     "cfd265c5b650df0caaf8b6d02386c9ec53f3c0029102430cf2763d5b40ee6f7d"
 ));
 
