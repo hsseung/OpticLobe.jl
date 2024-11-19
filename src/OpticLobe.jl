@@ -14,9 +14,6 @@
 
 module OpticLobe
 
-using Reexport
-@reexport using NamedArrays
-
 const PKG_ROOT = pkgdir(@__MODULE__)
 const DATADIR = joinpath(PKG_ROOT, "data")
 
@@ -78,6 +75,7 @@ W = NamedArray(W, names = (ind2id, ind2id), dimnames = ("cellid", "cellid"))
 A = NamedArray(A, names = (ind2id, alltypes), dimnames = ("cellid", "celltype"))
 Ai = A[:, intrinsictypes]
 export Ai
+export Name
 
 println("build class-family hierarchy above types")
 include("hierarchy.jl")
