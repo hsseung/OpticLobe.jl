@@ -38,7 +38,7 @@ function toppre(celltype::String; sort=:in, nresults = 15)
     )
 end
 
-function toppost(ids; nresults = 15, normalize=false)
+function toppost(ids::Vector{Int64}; nresults = 15, normalize=false)
     backend = isdefined(Main, :IJulia) && Main.IJulia.inited ? Val(:html) : Val(:text)
     if normalize
         post = sum(W[id2ind.(ids), :]*A, dims=1)[:].array
@@ -61,7 +61,7 @@ function toppost(ids; nresults = 15, normalize=false)
     end
 end
 
-function toppre(ids; nresults = 15, normalize=false)
+function toppre(ids::Vector{Int64}; nresults = 15, normalize=false)
     backend = isdefined(Main, :IJulia) && Main.IJulia.inited ? Val(:html) : Val(:text)
     if normalize
         pre = sum(A'*W[:, id2ind.(ids)], dims=2)[:].array

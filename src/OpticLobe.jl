@@ -37,7 +37,10 @@ include("cellstats.jl")
 export cell_length, cell_area, cell_volume
 
 include("celltypes.jl")
-export intrinsictypes, boundarytypes, centraltypes, ind2type, visualtypes, alltypes, ind2nt, A
+export intrinsictypes, boundarytypes, centraltypes, ind2type, visualtypes, alltypes, A
+
+include("neurotransmitters.jl")
+export ind2nt, type2nt
 
 using Preferences
 function set_synapses(new_synapses::String)
@@ -103,12 +106,13 @@ include("hexgraphics.jl")
 export rect2hex, square2hex, crop, montage
 export eyehot
 export triad, eyetriad, typetriad, celltriad
-export ellipsesummary
-export hexproject, drawpqaxes
+export ellipsesummary, drawellipse
+export hexproject, drawpqaxes, hexannulus
+export HexagonEye
 
 include("maptrace.jl")
 export tracebacktypes, tracetypes, inmaps, scorepath
-#export preimage, prepreimage, preprepreimage
+export preimage, prepreimage, preprepreimage # legacy code superseded by `inmaps`
 #export postimage
 
 include("spatial.jl")

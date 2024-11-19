@@ -1,4 +1,5 @@
-## spatial maps of connectivity (preimage, postimage)
+## spatial maps of connectivity
+## `inmaps` is the central function, and supersedes legacy code (preimage, postimage, ...)
 
 """
 normalize the columns of W to sum to one
@@ -29,7 +30,7 @@ Wback = NamedArray(Wback, names = (ind2id, ind2id))
 """
     tracetypes(celltypes)
 
-sum over all paths through the series of `celltypes`
+sum over all cellular paths through the series of `celltypes`
 
 global variable W assumed to be a NamedArray with ids as names
 """
@@ -41,7 +42,7 @@ end
 """
     tracebacktypes(celltypes)
 
-weighted sum over all paths through the series of `celltypes`
+weighted sum over all cellular paths through the series of `celltypes`
 
 global variable W assumed to be a NamedArray with ids as names
 """
@@ -53,6 +54,15 @@ end
 function tracebacktypes(celltypes::Vector{Union{String, Vector{<:Integer}}})
     @mfalse inds = [isa(celltype, String) ? ind2type .== celltype : id2ind.(celltype) for celltype in celltypes]
     return *([Wback[inds[i], inds[i+1]] for i = 1:length(inds)-1]...)
+end
+
+"""
+    scorepath(celltypes)
+
+scores a type path rather than summing over cellular paths
+"""
+function scorepath(celltypes::Vector{String})
+    return *([infraction[celltypes[i], celltypes[i+1]] for i = 1:length(celltypes)-1]...)
 end
 
 """
@@ -80,7 +90,8 @@ function inmaps(paths::NamedArray)
     return rfs
 end
 
-#### old code
+#### legacy code that has been superseded by `inmaps` and other functions above
+#### deprecated
 
 """
 create image showing cells in `pretype` presynaptic to cell `idpost`
@@ -233,8 +244,4 @@ function postimage(pretype::String, posttype::String)
         im[:, :, i] = postimage(idpre, posttype)
     end
     return im
-end
-
-function scorepath(celltypes::Vector{String})
-    return *([infraction[celltypes[i], celltypes[i+1]] for i = 1:length(celltypes)-1]...)
 end

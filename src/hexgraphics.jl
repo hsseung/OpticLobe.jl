@@ -2,7 +2,7 @@
 
 using Luxor, ColorSchemes
 using Printf
-
+using LinearAlgebra
 using MissingsAsFalse   # for triad functions
 
 # eye map (depends on ColumnAssignments.jld2)
@@ -432,12 +432,12 @@ end
 ######
 
 """
-    hexring(ims; kwargs...)
+    hexannulus(ims; kwargs...)
 
-display hexel images around a ring
+display hexel images arranged to form an annulus
 hexels must be colorants
 """
-function hexring(ims; hexelsize = 7, orbitscale = 1, textorbitscale = 1, ellipses = nothing, ellipsecolors = nothing, text = nothing, textcolors = nothing, maxvals = false, fontsize = 16)
+function hexannulus(ims; hexelsize = 7, orbitscale = 1, textorbitscale = 1, ellipses = nothing, ellipsecolors = nothing, text = nothing, textcolors = nothing, maxvals = false, fontsize = 16)
     imsize = size(ims[1], 1)
     orbit = orbitscale*hexelsize*imsize
     
