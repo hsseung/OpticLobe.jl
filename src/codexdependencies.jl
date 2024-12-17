@@ -13,9 +13,10 @@ register(DataDep("Codex cell stats",
 
     Citation: Matsliah et al.
     """,
-    joinpath(DOWNLOADS, "cell_stats.csv.gz"),
-                 md5("a79d4875e2b80e51d1269dcb86dd8743"),
-));
+                 joinpath(DOWNLOADS, "cell_stats.csv.gz"),
+                 (md5, "a79d4875e2b80e51d1269dcb86dd8743"),
+                 )
+         );
 
 
 register(DataDep("Codex neuron IDs",
@@ -28,7 +29,7 @@ register(DataDep("Codex neuron IDs",
     Citation: Matsliah et al.
     """,
     joinpath(DOWNLOADS, "neurons.csv.gz"),
-                 md5("f60333e9e4124160b9b203b1712a6f91"),
+                 (md5, "f60333e9e4124160b9b203b1712a6f91"),
 ));
 
 register(DataDep("Codex visual neuron types",
@@ -41,7 +42,7 @@ register(DataDep("Codex visual neuron types",
     Citation: Matsliah et al.
     """,
     joinpath(DOWNLOADS, "visual_neuron_types.csv.gz?generation=1720619193993712"),
-                 md5("f1870fc7c2bbfe7b99b869fdb83cf7ff"),
+                 (md5, "f1870fc7c2bbfe7b99b869fdb83cf7ff"),
 ));
 
 register(DataDep("Codex classification",
@@ -54,7 +55,7 @@ register(DataDep("Codex classification",
     Citation: Matsliah et al.
     """,
     joinpath(DOWNLOADS, "classification.csv.gz?generation=1733428415941889"),
-                 md5("6200e3f2016e113a829c92ecdeb4ac9c"),
+                 (md5, "6200e3f2016e113a829c92ecdeb4ac9c"),
 ));
 
 register(DataDep("Codex connections no threshold",
@@ -69,5 +70,5 @@ register(DataDep("Codex connections no threshold",
     This file is 202MB
     """,
     joinpath(DOWNLOADS, "connections_no_threshold.csv.gz"),
-                 md5("8332c0f03acd2419f56f9bbc002a1554"),
+                 (md5, "8332c0f03acd2419f56f9bbc002a1554"),
     ));
