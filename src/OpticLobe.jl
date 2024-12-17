@@ -111,7 +111,7 @@ export hexproject, drawpqaxes, hexannulus
 export HexagonEye
 
 include("maptrace.jl")
-export tracebacktypes, tracetypes, inmaps, scorepath
+export tracebacktypes, tracetypes, inmaps, outmaps, scorepath
 export preimage, prepreimage, preprepreimage # legacy code superseded by `inmaps`
 #export postimage
 

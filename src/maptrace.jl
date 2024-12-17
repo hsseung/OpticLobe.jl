@@ -117,7 +117,10 @@ end
 #### deprecated
 
 """
+    preimage(pretype, idpost) -> Matrix
+
 create image showing cells in `pretype` presynaptic to cell `idpost`
+
 `pretype` - list of possible presynaptic cell IDs, usually those belonging to one type
 `im` - image showing locations of cells that are presynaptic to cell `idpost`. pixel values are synapse number.
 """
