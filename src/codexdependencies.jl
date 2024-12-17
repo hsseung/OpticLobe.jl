@@ -41,7 +41,7 @@ register(DataDep("Codex visual neuron types",
 
     Citation: Matsliah et al.
     """,
-    joinpath(DOWNLOADS, "visual_neuron_types.csv.gz?generation=1720619193993712"),
+    joinpath(DOWNLOADS, "visual_neuron_types.csv.gz?generation=1733428451229225"),
                  (md5, "f1870fc7c2bbfe7b99b869fdb83cf7ff"),
 ));
 
