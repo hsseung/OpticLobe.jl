@@ -90,6 +90,29 @@ function inmaps(paths::NamedArray)
     return rfs
 end
 
+"""
+    outmaps(paths)
+
+`paths` - NamedArray with ids as names
+
+for each preid, map all postids to eye coordinates
+return NamedArray where preids are names, and elements are eye matrices.
+"""
+function outmaps(paths::NamedArray)
+    preids, postids = names(paths)
+    pfs = NamedArray([zeros(Float32, size(pq2column)) for i = 1:length(preids)], preids)
+    for preid in preids
+        for postid in postids
+            if haskey(id2pq, postid)
+                if ~ismissing(id2pq[postid])
+                    pfs[Name.(preid)][id2pq[postid]...] = paths[Name.(preid), Name.(postid)]
+                end
+            end
+        end
+    end
+    return pfs  # projective fields
+end
+
 #### legacy code that has been superseded by `inmaps` and other functions above
 #### deprecated
 
