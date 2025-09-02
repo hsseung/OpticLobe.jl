@@ -70,7 +70,10 @@ include("cellstats.jl")
 export cell_length, cell_area, cell_volume
 
 include("celltypes.jl")
-export intrinsictypes, boundarytypes, centraltypes, ind2type, visualtypes, alltypes, A
+export ind2category, ind2side, intrinsictypes, boundarytypes, othertypes, ind2type, visualtypes, alltypes, A
+
+include("classification.jl")
+export ind2superclass, ind2class, ind2subclass
 
 include("neurotransmitters.jl")
 export ind2nt, type2nt
