@@ -102,7 +102,7 @@ filter!(e -> e∉weirdos, intrinsictypes)  # remove weirdo types
 
 println("eliminating weirdo types from `ind2type`")
 for w in weirdos
-    @mfalse ind2type[ind2type .== w] .== missing
+    @mfalse ind2type[ind2type .== w] .= missing
 end
 
 # %% [markdown]
