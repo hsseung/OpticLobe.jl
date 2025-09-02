@@ -9,6 +9,39 @@
     using OpticLobe
     Wtt["Tm1", "Dm3p"] # number of synapses from Tm1 cells to Dm3p cells
     ```
+
+    ## Synapse Versions
+    
+    The package supports two synapse detection methods:
+    - **Princeton** (default): Newer synapse predictions
+    - **Buhmann**: Original synapse predictions from Buhmann et al.
+    
+    ### Single synapse version mode (default)
+    By default, only Princeton synapses are loaded into `W`:
+    ```julia
+    using OpticLobe
+    W[cellid1, cellid2]  # Uses Princeton synapses by default
+    ```
+    
+    To switch to Buhmann synapses as default:
+    ```julia
+    set_default_synapses("Buhmann")
+    # Restart Julia for changes to take effect
+    ```
+    
+    ### Both synapse versions mode
+    To load both synapse versions simultaneously:
+    ```julia
+    enable_both_synapses(true)
+    # Restart Julia for changes to take effect
+    ```
+    
+    After enabling, access both versions:
+    ```julia
+    W_Princeton[cellid1, cellid2]  # Princeton synapses
+    W_Buhmann[cellid1, cellid2]    # Buhmann synapses
+    W[cellid1, cellid2]             # Default version (Princeton unless changed)
+    ```
 """
 # BEWARE: information is exported as global variables
 
@@ -43,30 +76,29 @@ include("neurotransmitters.jl")
 export ind2nt, type2nt
 
 using Preferences
-function set_synapses(new_synapses::String)
-    if !(new_synapses in ("Buhmann", "Zetta"))
+
+function set_default_synapses(new_synapses::String)
+    if !(new_synapses in ("Buhmann", "Princeton"))
         throw(ArgumentError("Invalid synapses version: \"$(new_synapses)\""))
     end
-
-    # Set it in our runtime values, as well as saving it to disk at .julia/environments/v1.10/LocalPreferences.toml
-    @set_preferences!("synapses" => new_synapses)
-    @info("New version of synapses set; restart your Julia session for this change to take effect!")
+    @set_preferences!("default_synapses" => new_synapses)
+    @info("Default synapses set to $(new_synapses); restart your Julia session for this change to take effect!")
 end
-export set_synapses
+export set_default_synapses
 
-const synapses = @load_preference("synapses", "Buhmann")
-
-# choose Buhmann (original) or Zetta synapses
-@static if synapses == "Buhmann"
-    include("weightmatrix.jl")
-elseif synapses == "Zetta"
-    using JLD2, LinearAlgebra
-    W = load("/Users/sseung/.julia/dev/OpticLobe/data/old/weightmatrix-v783.2.jld2", "WW")
-    W[diagind(W)] .= 0  # eliminate autapses
-else
-    return nothing
+function enable_both_synapses(enable::Bool=true)
+    @set_preferences!("load_both_synapses" => enable)
+    @info("Load both synapses set to $(enable); restart your Julia session for this change to take effect!")
 end
+export enable_both_synapses
+
+include("weightmatrix.jl")
 export W
+
+# Export additional weight matrices if both were loaded
+if @load_preference("load_both_synapses", false)
+    export W_Buhmann, W_Princeton
+end
 
 include("inoutaverages.jl")
 export Wtt, Wct, Wtc, infraction, outfraction, inmean, outmean
@@ -75,6 +107,10 @@ export Wtt, Wct, Wtc, infraction, outfraction, inmean, outmean
 #include("corrections.jl")
 
 W = NamedArray(W, names = (ind2id, ind2id), dimnames = ("cellid", "cellid"))
+if @load_preference("load_both_synapses", false)
+    global W_Buhmann = NamedArray(W_Buhmann, names = (ind2id, ind2id), dimnames = ("cellid", "cellid"))
+    global W_Princeton = NamedArray(W_Princeton, names = (ind2id, ind2id), dimnames = ("cellid", "cellid"))
+end
 A = NamedArray(A, names = (ind2id, alltypes), dimnames = ("cellid", "celltype"))
 Ai = A[:, intrinsictypes]
 export Ai

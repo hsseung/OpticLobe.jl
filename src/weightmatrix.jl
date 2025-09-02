@@ -15,12 +15,11 @@
 # ---
 
 # %% [markdown]
-# # Export FlyWire weight matrix to JLD2 file
 # Downloads synapses from Codex and creates:
 #
 # - `W[pre, post]` sparse matrix, number of synapses (`Int32`) from `pre` to `post` (`Int32`)
 #
-# Depends on `id2ind` from `cellids.jld2`.
+# Depends on `id2ind` defined in `cellids.jl`.
 #
 # Note that `W` does not depend on cell types, except that outgoing synapses from T1 cells are zeroed out.
 #
@@ -30,50 +29,79 @@
 using DataDeps, CSV, DataFrames
 using SparseArrays, NamedArrays
 using MissingsAsFalse
+using LinearAlgebra
 
 # %% [markdown]
 # ## download synapse table from Codex into DataFrame
 
 # %%
-println("reading synapse table")
-df = CSV.read(datadep"Codex connections no threshold/connections_no_threshold.csv.gz", DataFrame)
-
-# %% [markdown]
-# ## use grouped data frame to combine synapses that share the same pre- and post-synaptic cells
-
-# %%
-println("counting synapses for each pre-post pair of neurons")
-gdf = groupby(df, [:pre_root_id, :post_root_id])
-weighttable = combine(gdf, :syn_count => sum)
-
-# %% [markdown]
-# ## convert data frame to sparse matrix
-
-# %%
-println("converting list of connections to sparse matrix")
-
-# id2ind, ind2id = load("cellids.jld2", "id2ind", "ind2id")   # if NamedArray is desired
-# id2ind = load("cellids.jld2", "id2ind")
-
-II = Int32[]     # Int32 sufficient here as there are only 10^5 neurons
-JJ = Int32[]
-WW = Int32[]
-for (idpre, idpost, count) in zip(weighttable.pre_root_id, weighttable.post_root_id, weighttable.syn_count_sum)
-    if haskey(id2ind, idpre) && haskey(id2ind, idpost)
-        push!(II, id2ind[idpre])
-        push!(JJ, id2ind[idpost])
-        push!(WW, count)
+function load_synapses(synapse_type::String)
+    println("reading synapse table ($(synapse_type) version)")
+    if synapse_type == "Buhmann"
+        df = CSV.read(datadep"Codex Buhmann connections no threshold/connections_buhmann_no_threshold.csv.gz", DataFrame)
+    elseif synapse_type == "Princeton"
+        df = CSV.read(datadep"Codex Princeton connections no threshold/connections_princeton_no_threshold.csv.gz", DataFrame)
+    else
+        error("Unknown synapses version: $(synapse_type)")
     end
+    return df
 end
 
-ncell = length(id2ind)
-W = sparse(II, JJ, WW, ncell, ncell)
+# %% [markdown]
+# ## function to build weight matrix from synapse data
 
 # %%
-# this number was 54519562 in Oct 2023 file
-# now updated for Feb 2024 file
-println("total number of synapses = ", sum(W))
-println("This number should match 54492922 for v783 Feb 2024")
+function build_weight_matrix(synapse_type::String)
+    df = load_synapses(synapse_type)
+    
+    # use grouped data frame to combine synapses that share the same pre- and post-synaptic cells
+    println("counting synapses for each pre-post pair of neurons")
+    gdf = groupby(df, [:pre_root_id, :post_root_id])
+    weighttable = combine(gdf, :syn_count => sum)
+    
+    # convert data frame to sparse matrix
+    println("converting list of connections to sparse matrix")
+    
+    II = Int32[]     # Int32 sufficient here as there are only 10^5 neurons
+    JJ = Int32[]
+    WW = Int32[]
+    for (idpre, idpost, count) in zip(weighttable.pre_root_id, weighttable.post_root_id, weighttable.syn_count_sum)
+        if haskey(id2ind, idpre) && haskey(id2ind, idpost)
+            push!(II, id2ind[idpre])
+            push!(JJ, id2ind[idpost])
+            push!(WW, count)
+        end
+    end
+    
+    ncell = length(id2ind)
+    W = sparse(II, JJ, WW, ncell, ncell)
+    
+    # eliminate autapses (self-connections)
+    W[diagind(W)] .= 0
+    
+    println("total number of synapses = ", sum(W))
+    if synapse_type == "Buhmann"
+        println("This number should match 54492922 for Buhmann v783 Feb 2024")
+    elseif synapse_type == "Princeton"
+        println("Using Princeton synapses")
+    end
+    
+    return W
+end
+
+# Load both versions if requested, otherwise just the default
+using Preferences
+const load_both = @load_preference("load_both_synapses", false)
+const default_synapses = @load_preference("default_synapses", "Princeton")
+
+if load_both
+    println("Loading both synapse versions...")
+    W_Buhmann = build_weight_matrix("Buhmann")
+    W_Princeton = build_weight_matrix("Princeton")
+    W = (default_synapses == "Buhmann") ? W_Buhmann : W_Princeton
+else
+    W = build_weight_matrix(default_synapses)
+end
 
 # %% [markdown]
 # ## use prior info to eliminate T1 outgoing synapses
