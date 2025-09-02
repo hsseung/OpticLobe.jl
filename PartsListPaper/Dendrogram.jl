@@ -32,7 +32,7 @@ using NamedArrays, OffsetArrays
 using StatsPlots, Measures
 
 # %%
-using ColorSchemes
+using ColorSchemes, Colors
 
 # %%
 using Printf
@@ -57,7 +57,8 @@ c = hclust(dist, linkage = :average)
 # flat clustering, ordered by cluster size
 # This code remains as it might be convenient for future explorations.
 # For the figures, the flat clusterings will be recomputed later using Phylo
-ass = cutree(c, h=0.9)
+thres_absolute = 0.89
+ass = cutree(c, h=thres_absolute)
 order = sortperm(counts(ass), rev=true)
 
 for i in order
@@ -72,8 +73,11 @@ end
 # code modified from https://github.com/JuliaStats/Clustering.jl/issues/209
 using NewickTree: setdistance!
 
+# Global constant for minimum distance baseline
+# BEWARE: all distances relative to this baseline
+const MINDIST = 0.4
+
 function get_tree(hc, labels)
-   mindist = 0.4   # lowest possible distance. BEWARE: all distances relative to this baseline
    nodes = [NewickTree.Node(i, n=string(n), d=0.) for (i,n) in zip(hc.order,labels)]
    n = length(nodes)
    idfun(x) = x > 0 ? x + n : abs(x)
@@ -82,7 +86,7 @@ function get_tree(hc, labels)
        j, k = idfun.(hc.merges[i,:])
        a = nodes[j]
        b = nodes[k]
-       h = hc.heights[i] - mindist
+       h = hc.heights[i] - MINDIST
 #       h = hc.heights[i]
        newnode = NewickTree.Node(nid, n="$nid", d=h)
        setdistance!(a, h - NewickTree.distance(a))
@@ -122,7 +126,7 @@ dfsnames = [n.name for n in traversal(tree, inorder)]
 # %%
 forest = deepcopy(tree)
 h = nodeheights(forest)
-thres = maximum(h) - 0.5   # 0.5 is relative to `mindist` 0.4, so real threshold is 0.9
+thres = maximum(h) - (thres_absolute - MINDIST)   # e.g. this is 0.5 if `MINDIST` is 0.4, and thres_absolute is 0.9
 
 # %%
 for node in h.axes[1][h .< thres]
@@ -160,7 +164,7 @@ clusternames[issingleton] .= vcat(clusters[issingleton]...)
 
 # %%
 cmap = OffsetArray(
-    color.(
+    parse.(Colorant,
         ["#000000",
          "#ffff00",
          "#008000",
@@ -184,7 +188,7 @@ cmap = OffsetArray(
 
 # %%
 # use if manual palette not available
-# cmap = OffsetArray(vcat([RGB(0,0,0)], distinguishable_colors(ncluster, [RGB(1,1,1), RGB(0,0,0)], dropseed=true)), 0:ncluster)
+cmap = OffsetArray(vcat([RGB(0,0,0)], distinguishable_colors(ncluster, [RGB(1,1,1), RGB(0,0,0)], dropseed=true)), 0:ncluster)
 
 # %%
 function colorchildren(tree, start, i)
@@ -222,7 +226,7 @@ plot!(temp, color = permutedims(cmap[1:end]), linewidth = 3, legend = :bottomrig
 
 # %%
 println("saving dendrogram")
-StatsPlots.savefig("Fig 2c TypePolarDendrogram.svg")
+StatsPlots.savefig("Fig 2c TypePolarDendrogram.pdf")
 
 # %% [markdown]
 # ## heatmap of connectivity between clusters
@@ -253,7 +257,7 @@ plot(hin, hout, size = (800, 400), bottom_margin = 11mm)
 
 # %%
 println("saving input and output fractions for connections between flat clusters")
-savefig("Fig S11b inoutfractionclusters.svg")
+savefig("Fig S11b inoutfractionclusters.pdf")
 
 # %% [markdown]
 # ## generate separate colorbar

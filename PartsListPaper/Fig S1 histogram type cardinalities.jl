@@ -17,14 +17,15 @@
 # %% [markdown]
 # # Figure S1. histogram of type cardinalities, nonuniform bucketing
 
-# Needs updating to not depend on CSV file for central brain cardinalities
+# In the original code (Nature_issue branch), this depended on CSV file for central brain cardinalities
+# This is fixed now.
 
 # %%
 using OpticLobe
 
 # %% jupyter={"outputs_hidden": false}
 using NamedArrays
-using StatsBase
+using StatsBase, FreqTables
 using Plots
 using Measures
 
@@ -41,16 +42,14 @@ cellnumbers = NamedArray(sum(Ai.array, dims=1)[:], intrinsictypes)
 using CSV, DataFrames
 
 # %%
-cb_df = CSV.read("../v630/central_brain_type_cardinalities.csv", DataFrame)
-
-# %%
-maximum(cb_df[:, "Num Cells"])
+#cb_df = CSV.read("../v630/central_brain_type_cardinalities.csv", DataFrame)
+cellnumbers_cb = freqtable(collect(skipmissing(ind2type[ind2superclass .== "central"])))
 
 # %%
 binedges = [1, 2, 3, 11, 26, 51, 101, 201, 700, 2500]
 
 # %%
-h_cb = fit(Histogram, cb_df[:, "Num Cells"], binedges, closed=:left)
+h_cb = fit(Histogram, cellnumbers_cb, binedges, closed=:left)
 
 # %%
 h_optic = fit(Histogram, cellnumbers, binedges, closed=:left)
@@ -87,4 +86,4 @@ plot(
 
 # %%
 #savefig("HistogramNumberOfCellsPerTypeBuckets.svg")
-savefig("HistogramTypeCardinalitiesBuckets.svg")
+savefig("HistogramTypeCardinalitiesBuckets.pdf")

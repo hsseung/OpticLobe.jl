@@ -29,6 +29,11 @@ using OrderedCollections
 const TARGETDIR = "Fig 1"
 # const TARGETDIR = "~/sseung@princeton.edu/OpticLobeCellTypesPaper/panels"
 
+# Create target directory if it doesn't exist
+if !isdir(TARGETDIR)
+    mkdir(TARGETDIR)
+end
+
 # %% [markdown]
 # ## right panel
 
@@ -255,7 +260,7 @@ columns = [plot(
     ) for i = ncol:-1:1]
 
 hleft = plot(columns..., 
-#    size = (200*ncol, 800*4/ncol), 
+    size = (200*ncol, 800*4/ncol),
     layout = (1, ncol),
     ytickfontsize = 9,
     xtickfontsize = 8,
