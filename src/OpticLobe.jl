@@ -52,15 +52,6 @@ const DATADIR = joinpath(PKG_ROOT, "data")
 
 ENV["DATADEPS_ALWAYS_ACCEPT"] = true
 
-# use dictionary as function
-# useful when broadcasting e.g. id2ind
-function (d::Dict)(key)
-    get(d, key, missing)
-end
-
-#include("githubdependencies.jl")
-#include("neurontable.jl")
-
 include("codexdependencies.jl")
 
 include("cellids.jl")
@@ -105,9 +96,6 @@ end
 
 include("inoutaverages.jl")
 export Wtt, Wct, Wtc, infraction, outfraction, inmean, outmean
-
-#println("reading corrections")
-#include("corrections.jl")
 
 W = NamedArray(W, names = (ind2id, ind2id), dimnames = ("cellid", "cellid"))
 if @load_preference("load_both_synapses", false)

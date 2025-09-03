@@ -28,6 +28,12 @@
 # %%
 using CSV, DataFrames
 
+# %%
+# For standalone execution, include dependencies
+if (@__MODULE__) == Main
+    include("cellids.jl")
+end
+
 # %% [markdown]
 # ### root IDs from Codex download
 # `Int64` is compatible with the largest cell ID, even though root IDs are technically `UInt64`

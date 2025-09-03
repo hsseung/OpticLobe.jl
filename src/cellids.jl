@@ -15,7 +15,6 @@
 # ---
 
 # %% [markdown]
-# # Export FlyWire cell IDs to JLD2 file
 # Reads cell IDs from codex download and creates:
 #
 # - `ind2id` - `Int64` cell IDs in canonical order corresponding to indices of weight matrix
@@ -26,6 +25,14 @@
 
 # %%
 using CSV, DataFrames
+
+# %%
+# For standalone execution, include dependencies
+if (@__MODULE__) == Main
+    println("Running in standalone mode")
+
+    include("codexdependencies.jl")
+end
 
 # %% [markdown]
 # ### root IDs from Codex download
@@ -40,3 +47,10 @@ ind2id = neurons.root_id
 # %%
 # ### dictionary for reverse lookup
 id2ind = Dict(ind2id .=> Int32.(1:length(ind2id)))
+
+# %%
+# use dictionary as function
+# useful when broadcasting e.g. id2ind
+function (d::Dict)(key)
+    get(d, key, missing)
+end

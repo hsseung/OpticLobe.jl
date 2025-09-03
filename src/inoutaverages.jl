@@ -42,6 +42,12 @@ using MissingsAsFalse
 using ProgressMeter
 
 # %%
+# For standalone execution, include dependencies and set defaults
+if (@__MODULE__) == Main
+    include("weightmatrix.jl")
+end
+
+# %%
 ntypes = length(alltypes)
 
 # %%
@@ -50,6 +56,7 @@ Wtc = A'*W             # type to cell
 Wct = W*A              # cell to type
 
 normalization = 1 ./ sum(Wct, dims=1)  # this is contorted, but seems necessary to preserve sparsity
+normalization[isinf.(normalization)] .= 0 # needed because AN_GNG_124 has zero inputs
 infraction = Wtt .* normalization
 
 normalization = 1 ./ sum(Wtc, dims=2)

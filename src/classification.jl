@@ -31,6 +31,12 @@
 using DataDeps, CSV, DataFrames
 
 # %%
+# For standalone execution, include dependencies
+if (@__MODULE__) == Main
+    include("cellids.jl")
+end
+
+# %%
 classification = sort(CSV.read(datadep"Codex classification/classification.csv.gz", DataFrame))
 
 # Verify that rows of `classification` have the canonical order, the same order as `neurons`

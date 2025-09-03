@@ -26,6 +26,22 @@
 # `W` is *not* yet a `NamedArray`. This conversion is made later, as it is for the convenience of human user.
 
 # %%
+using Preferences
+
+# For standalone execution, include dependencies and set defaults
+if (@__MODULE__) == Main
+    include("celltypes.jl")
+    
+    # Standalone defaults
+    const load_both = false
+    const default_synapses = "Buhmann"
+else
+    # Load preferences from package
+    const load_both = @load_preference("load_both_synapses", false)
+    const default_synapses = @load_preference("default_synapses", "Princeton")
+end
+
+# %%
 using DataDeps, CSV, DataFrames
 using SparseArrays, NamedArrays
 using MissingsAsFalse
@@ -83,17 +99,13 @@ function build_weight_matrix(synapse_type::String)
     if synapse_type == "Buhmann"
         println("This number should match 54492922 for Buhmann v783 Feb 2024")
     elseif synapse_type == "Princeton"
-        println("Using Princeton synapses")
+        println("This number should match 76944499 for Princeton synapses")
     end
     
     return W
 end
 
 # Load both versions if requested, otherwise just the default
-using Preferences
-const load_both = @load_preference("load_both_synapses", false)
-const default_synapses = @load_preference("default_synapses", "Princeton")
-
 if load_both
     println("Loading both synapse versions...")
     W_Buhmann = build_weight_matrix("Buhmann")

@@ -9,6 +9,12 @@ using NamedArrays
 using StatsBase
 
 # %%
+# For standalone execution, include dependencies
+if (@__MODULE__) == Main
+    include("celltypes.jl")
+end
+
+# %%
 function modethreshold(a::AbstractArray, threshold = 0.3)
     winner = mode(a)
     if ismissing(winner)

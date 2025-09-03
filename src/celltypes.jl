@@ -17,13 +17,6 @@
 # %% [markdown]
 # # Cell Types including visual and central brain
 #
-# if you want to run as a standalone script, first run these scripts:
-#   include("codexdependencies.jl")
-#   include("cellids.jl")
-#
-# and define this function
-#   (id2ind::Dict)(k) = id2ind[k]
-#
 # read Codex downloads
 # - `consolidated_cell_types.csv.gz` for all cell type annotations
 # - `visual_neuron_types.csv.gz` for intrinsic vs boundary categories, and side
@@ -46,7 +39,7 @@ using NaturalSort
 
 # %%
 using MissingsAsFalse
-using Missings # for `levels`
+import Missings.levels
 
 # %%
 # for the assignment matrix A.
@@ -55,6 +48,12 @@ using SparseArrays
 
 # %%
 import StatsBase.countmap
+
+# %%
+# For standalone execution, include dependencies
+if (@__MODULE__) == Main
+    include("cellids.jl")
+end
 
 # %%
 visual = CSV.read(datadep"Codex visual neuron types/visual_neuron_types.csv.gz", DataFrame)
@@ -143,8 +142,17 @@ end
 # %%
 visualtypes = vcat(intrinsictypes, boundarytypes)
 alltypes = vcat(visualtypes, othertypes)
+
+println("computing assignment matrix: all")
 A = zeros(Bool, length(ind2type), length(alltypes))
 @mfalse for (i, celltype) in enumerate(alltypes)
     A[ind2type .== celltype, i]  .= 1
-end 
+end
 A = SparseMatrixCSC{Bool, Int32}(A);
+
+# %%
+# for typing the right optic lobe, we eliminate cells in the left optic lobe
+# i.e. A_right includes right optic lobe, bilateral optic lobes, central brain, etc.
+# println("computing assignment matrix: left, right")
+# @mfalse A_right = sparse(ind2side .!= "left") .* A;
+# @mfalse A_left = sparse(ind2side .!= "right") .* A;
