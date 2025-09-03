@@ -30,8 +30,7 @@ using StatsBase
 using Plots, Measures
 
 # %%
-# TARGETDIR = "/Users/sseung/sseung@princeton.edu/OpticLobeCellTypesPaper/panels"
-TARGETDIR = "."
+include("config.jl")
 
 # %% [markdown]
 # ## entropy (intrinsic)

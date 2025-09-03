@@ -26,13 +26,7 @@ using Plots, Measures
 using OrderedCollections
 
 # %%
-const TARGETDIR = "Fig 1"
-# const TARGETDIR = "~/sseung@princeton.edu/OpticLobeCellTypesPaper/panels"
-
-# Create target directory if it doesn't exist
-if !isdir(TARGETDIR)
-    mkdir(TARGETDIR)
-end
+include("config.jl")
 
 # %% [markdown]
 # ## right panel

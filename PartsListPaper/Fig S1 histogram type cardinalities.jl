@@ -24,25 +24,34 @@
 using OpticLobe
 
 # %% jupyter={"outputs_hidden": false}
-using NamedArrays
+using NamedArrays, SparseArrays
 using StatsBase, FreqTables
 using Plots
 using Measures
+using MissingsAsFalse
+
+# %%
+include("config.jl")
+
+side = "right"
 
 # %% [markdown]
 # ## families types and cells per class
 
 # %%
-cellnumbers = NamedArray(sum(Ai.array, dims=1)[:], intrinsictypes)
+# two methods, both giving the same result
+# @mfalse countdict = countmap(skipmissing(ind2type[(ind2side .== side) .& (ind2category .== "intrinsic")]))
+# cellnumbers = NamedArray(countdict.(intrinsictypes), intrinsictypes)
+@mfalse cellnumbers = NamedArray(sum(sparse(ind2side .== side) .* Ai.array, dims=1)[:], intrinsictypes)
 
 # %% [markdown]
 # ## central brain number of cells per type
 
 # %%
-using CSV, DataFrames
+#using CSV, DataFrames
+#cb_df = CSV.read("../v630/central_brain_type_cardinalities.csv", DataFrame)
 
 # %%
-#cb_df = CSV.read("../v630/central_brain_type_cardinalities.csv", DataFrame)
 cellnumbers_cb = freqtable(collect(skipmissing(ind2type[ind2superclass .== "central"])))
 
 # %%
@@ -75,7 +84,7 @@ default(
 plot(
     bar(
         h_optic.weights,
-        title = "right optic lobe"
+        title = side * " optic lobe"
     ),
     bar(
         h_cb.weights,
@@ -86,4 +95,4 @@ plot(
 
 # %%
 #savefig("HistogramNumberOfCellsPerTypeBuckets.svg")
-savefig("HistogramTypeCardinalitiesBuckets.pdf")
+savefig(joinpath(TARGETDIR, "HistogramTypeCardinalitiesBuckets.pdf"))

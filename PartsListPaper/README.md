@@ -40,7 +40,7 @@ julia --project=. "Fig 1 cell numbers.jl"
 - **`Data S4 input output heatmaps.jl`** - Input/output heatmap generation for Supplementary Data S4
 
 ### Analysis Tools
-- **`Dendrogram.jl`** - Hierarchical clustering and dendrogram generation
+- **`dendrograms.jl`** - Hierarchical clustering and dendrogram generation
 - **`perplexity.jl`** - Perplexity calculations for dimensionality analysis
 
 ## Dependencies

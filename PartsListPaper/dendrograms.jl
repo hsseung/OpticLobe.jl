@@ -19,6 +19,8 @@
 # %%
 using OpticLobe
 
+include("config.jl")
+
 # %%
 using Clustering, Distances
 
@@ -36,6 +38,31 @@ using ColorSchemes, Colors
 
 # %%
 using Printf
+
+# %%
+using Preferences
+
+# Configuration for different synapse versions
+# Load preference from OpticLobe package since this is a standalone script
+const SYNAPSE_VERSION = Preferences.load_preference(OpticLobe, "default_synapses", "Princeton")
+
+# Synapse-specific thresholds and settings
+const SYNAPSE_CONFIG = Dict(
+    "Princeton" => Dict(
+        :thres_coarse => 0.89,
+        :thres_fine => 0.885, 
+        :thres_finest => 0.86,
+        :colormap => :auto        # Use automatic colormap
+    ),
+    "Buhmann" => Dict(
+        :thres_coarse => 0.9,    # May need adjustment
+        :thres_fine => 0.885,     # May need adjustment
+        :thres_finest => 0.86,    # May need adjustment
+        :colormap => :manual      # Use manual colormap from Arie for coarse threshold
+    )
+)
+
+println("Using $(SYNAPSE_VERSION) synapses with configuration: ", SYNAPSE_CONFIG[SYNAPSE_VERSION])
 
 # %%
 # remove photoreceptors from list of types
@@ -57,7 +84,8 @@ c = hclust(dist, linkage = :average)
 # flat clustering, ordered by cluster size
 # This code remains as it might be convenient for future explorations.
 # For the figures, the flat clusterings will be recomputed later using Phylo
-thres_absolute = 0.89
+config = SYNAPSE_CONFIG[SYNAPSE_VERSION]
+thres_absolute = config[:thres_coarse]
 ass = cutree(c, h=thres_absolute)
 order = sortperm(counts(ass), rev=true)
 
@@ -76,6 +104,58 @@ using NewickTree: setdistance!
 # Global constant for minimum distance baseline
 # BEWARE: all distances relative to this baseline
 const MINDIST = 0.4
+
+function extract_clusters(tree, threshold_absolute, dfsnames, mindist=MINDIST)
+    """Extract clusters from tree using given threshold"""
+    forest = deepcopy(tree)
+    h = nodeheights(forest)
+    thres = maximum(h) - (threshold_absolute - mindist)
+    
+    for node in h.axes[1][h .< thres]
+        deletenode!(forest, node)
+    end
+    
+    roots = getroots(forest)
+    clusters = Vector{String}[]
+    for node in roots
+        d = filter(e -> !startswith(e, "Node"), getdescendants(forest, node.name))
+        push!(clusters, isempty(d) ? [node.name] : d)
+    end
+    
+    rootnames = [r.name for r in roots]
+    p = sortperm(indexin(rootnames, dfsnames))
+    rootnames = rootnames[p]
+    clusters = reverse.(clusters[p])
+    
+    return clusters, rootnames
+end
+
+function color_clusters(tree, rootnames)
+    """Assign colors to tree branches based on cluster roots"""
+    coloring = []
+    for (i, root) in enumerate(rootnames)
+        push!(coloring, colorchildren(tree, root, i))
+    end
+    colorings = +(coloring...)
+    
+    unique_colors = unique(colorings)
+    reassign = Dict(unique_colors .=> 0:(length(unique_colors)-1))
+    for i = 1:length(colorings)
+        if colorings[i] > 0
+            colorings[i] = reassign[colorings[i]]
+        end
+    end
+    
+    ncluster = length(rootnames)
+    return colorings, ncluster
+end
+
+function print_cluster_stats(clusters)
+    """Print statistics about cluster sizes"""
+    println(length(clusters), " clusters total, including ", 
+            sum(length.(clusters) .== 1), " singletons")
+    println("cluster sizes ", sort(length.(clusters), rev=true))
+end
 
 function get_tree(hc, labels)
    nodes = [NewickTree.Node(i, n=string(n), d=0.) for (i,n) in zip(hc.order,labels)]
@@ -124,32 +204,10 @@ dfsnames = [n.name for n in traversal(tree, inorder)]
 # ### threshold tree to obtain a forest
 
 # %%
-forest = deepcopy(tree)
-h = nodeheights(forest)
-thres = maximum(h) - (thres_absolute - MINDIST)   # e.g. this is 0.5 if `MINDIST` is 0.4, and thres_absolute is 0.9
+clusters, rootnames = extract_clusters(tree, thres_absolute, dfsnames)
 
 # %%
-for node in h.axes[1][h .< thres]
-    deletenode!(forest, node)
-end
-
-roots = getroots(forest)
-
-clusters = Vector{String}[]
-for node in roots
-    d = filter( e -> !startswith(e, "Node"), getdescendants(forest, node.name))
-    push!(clusters, isempty(d) ? [node.name] : d)
-end
-
-# %%
-rootnames = [r.name for r in roots]
-p = sortperm(indexin(rootnames, dfsnames))
-rootnames = rootnames[p]
-clusters = reverse.(clusters[p])
-
-# %%
-println(length(clusters), " clusters total, including ", sum(length.(clusters) .== 1), " singletons")
-println("cluster sizes ", sort(length.(clusters), rev = true))
+print_cluster_stats(clusters)
 
 # %%
 clusternames = Vector{String}(undef, length(clusters))
@@ -159,36 +217,38 @@ clusternames[.!issingleton] .= ["Cluster$i" for i = 1:ncluster]
 clusternames[issingleton] .= vcat(clusters[issingleton]...)
 
 # %% [markdown]
-# ### colormap from Arie
-# OffsetArray is convenient so 0th element can be black
+# ### colormap configuration
+# Use manual colormap for Buhmann, automatic for Princeton
 
 # %%
-cmap = OffsetArray(
-    parse.(Colorant,
-        ["#000000",
-         "#ffff00",
-         "#008000",
-         "#ffffaf",
-         "#ffd700",
-         "#00ffff",
-         "#ff00ff",
-         "#ee82ee",
-         "#4169E1",
-         "#7fff00",
-         "#1e90ff",
-         "#ff4500",
-         "#00fa9a",
-         "#F0E68C",
-         "#F5DEB3",
-         "#BDB76B",
-         "#b8860b",
-         ]
-    ),
-    0:16)
-
-# %%
-# use if manual palette not available
-cmap = OffsetArray(vcat([RGB(0,0,0)], distinguishable_colors(ncluster, [RGB(1,1,1), RGB(0,0,0)], dropseed=true)), 0:ncluster)
+if config[:colormap] == :manual
+    # Manual colormap from Arie (for Buhmann)
+    cmap = OffsetArray(
+        parse.(Colorant,
+            ["#000000",
+             "#ffff00",
+             "#008000",
+             "#ffffaf",
+             "#ffd700",
+             "#00ffff",
+             "#ff00ff",
+             "#ee82ee",
+             "#4169E1",
+             "#7fff00",
+             "#1e90ff",
+             "#ff4500",
+             "#00fa9a",
+             "#F0E68C",
+             "#F5DEB3",
+             "#BDB76B",
+             "#b8860b",
+             ]
+        ),
+        0:16)
+else
+    # Automatic distinguishable colors (for Princeton)
+    cmap = OffsetArray(vcat([RGB(0,0,0)], distinguishable_colors(ncluster, [RGB(1,1,1), RGB(0,0,0)], dropseed=true)), 0:ncluster)
+end
 
 # %%
 function colorchildren(tree, start, i)
@@ -197,20 +257,7 @@ end
 
 # %%
 # label descendants of each root
-coloring = []
-for (i, root) in enumerate(rootnames)
-    push!(coloring, colorchildren(tree, root, i))
-end
-colorings = +(coloring...)
-
-# %%
-reassign = Dict(unique(colorings) .=> 0:ncluster)
-
-for i = 1:length(colorings)
-    if colorings[i] > 0
-        colorings[i] = reassign[colorings[i]]
-    end
-end
+colorings, ncluster = color_clusters(tree, rootnames)
 
 # %%
 default(; # Plots defaults
@@ -226,7 +273,7 @@ plot!(temp, color = permutedims(cmap[1:end]), linewidth = 3, legend = :bottomrig
 
 # %%
 println("saving dendrogram")
-StatsPlots.savefig("Fig 2c TypePolarDendrogram.pdf")
+savefig(joinpath(TARGETDIR, "Fig 2c TypePolarDendrogram.pdf"))
 
 # %% [markdown]
 # ## heatmap of connectivity between clusters
@@ -257,7 +304,7 @@ plot(hin, hout, size = (800, 400), bottom_margin = 11mm)
 
 # %%
 println("saving input and output fractions for connections between flat clusters")
-savefig("Fig S11b inoutfractionclusters.pdf")
+savefig(joinpath(TARGETDIR, "Fig S11b inoutfractionclusters.svg"))  # pdf doesn't render properly
 
 # %% [markdown]
 # ## generate separate colorbar
@@ -271,32 +318,11 @@ close(io)
 # ## dendrogram with finer clusters
 
 # %%
-forest = deepcopy(tree)
-h = nodeheights(forest)
-thres = maximum(h) - 0.485
+thres_absolute = config[:thres_fine]
+clusters, rootnames = extract_clusters(tree, thres_absolute, dfsnames)
 
 # %%
-for node in h.axes[1][h .< thres]
-    deletenode!(forest, node)
-end
-
-roots = getroots(forest)
-
-clusters = Vector{String}[]
-for node in roots
-    d = filter( e -> !startswith(e, "Node"), getdescendants(forest, node.name))
-    push!(clusters, isempty(d) ? [node.name] : d)
-end
-
-# %%
-rootnames = [r.name for r in roots]
-p = sortperm(indexin(rootnames, dfsnames))
-rootnames = rootnames[p]
-clusters = reverse.(clusters[p])
-
-# %%
-println(length(clusters), " clusters total, including ", sum(length.(clusters) .== 1), " singletons")
-println("cluster sizes ", sort(length.(clusters), rev = true))
+print_cluster_stats(clusters)
 
 # %%
 issingleton = length.(clusters) .== 1
@@ -304,20 +330,7 @@ ncluster = sum(.!issingleton)   # number of clusters that are not singletons
 
 # %%
 # label descendants of each root
-coloring = []
-for (i, root) in enumerate(rootnames)
-    push!(coloring, colorchildren(tree, root, i))
-end
-colorings = +(coloring...)
-
-# %%
-reassign = Dict(unique(colorings) .=> 0:ncluster)
-
-for i = 1:length(colorings)
-    if colorings[i] > 0
-        colorings[i] = reassign[colorings[i]]
-    end
-end
+colorings, ncluster = color_clusters(tree, rootnames)
 
 # %%
 default(; # Plots defaults
@@ -336,38 +349,17 @@ plot(tree, treetype = :fan, linecolor = cmap[colorings], linewidth=2)
 
 # %%
 println("saving dendrogram with finer flat clustering")
-StatsPlots.savefig("Fig S10a TypePolarDendrogramFiner.pdf")
+savefig(joinpath(TARGETDIR, "Fig S10a TypePolarDendrogramFiner.pdf"))
 
 # %% [markdown]
 # ## dendrogram with finest clusters
 
 # %%
-forest = deepcopy(tree)
-h = nodeheights(forest)
-thres = maximum(h) - 0.46
+thres_absolute = config[:thres_finest]
+clusters, rootnames = extract_clusters(tree, thres_absolute, dfsnames)
 
 # %%
-for node in h.axes[1][h .< thres]
-    deletenode!(forest, node)
-end
-
-roots = getroots(forest)
-
-clusters = Vector{String}[]
-for node in roots
-    d = filter( e -> !startswith(e, "Node"), getdescendants(forest, node.name))
-    push!(clusters, isempty(d) ? [node.name] : d)
-end
-
-# %%
-rootnames = [r.name for r in roots]
-p = sortperm(indexin(rootnames, dfsnames))
-rootnames = rootnames[p]
-clusters = reverse.(clusters[p])
-
-# %%
-println(length(clusters), " clusters total, including ", sum(length.(clusters) .== 1), " singletons")
-println("cluster sizes ", sort(length.(clusters), rev = true))
+print_cluster_stats(clusters)
 
 # %%
 issingleton = length.(clusters) .== 1
@@ -399,4 +391,4 @@ plot(tree, treetype = :fan, linecolor = cmap[colorings], linewidth=2)
 
 # %%
 println("saving dendrogram with finest flat clustering")
-StatsPlots.savefig("Fig S10b TypePolarDendrogramFinest.pdf")
+savefig(joinpath(TARGETDIR, "Fig S10b TypePolarDendrogramFinest.pdf"))

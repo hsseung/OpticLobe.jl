@@ -20,8 +20,9 @@
 # %%
 using OpticLobe
 
+include("config.jl")
+
 # %% jupyter={"outputs_hidden": false}
-using JLD2
 using NamedArrays, SparseArrays
 using Plots
 using OrderedCollections
@@ -88,4 +89,4 @@ vline!(p, odd, linealpha = 0.3, linecolor=cmap[2])
 vline!(p, even, linealpha = 0.3, linecolor=cmap[3])
 
 # %%
-savefig("Fig S4.pdf")
+savefig(joinpath(TARGETDIR, "Fig S4.pdf"))

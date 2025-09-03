@@ -19,6 +19,8 @@
 
 # %% jupyter={"outputs_hidden": false}
 using OpticLobe
+
+include("config.jl")
 using NamedArrays
 using Distances
 using Plots, Measures, Printf
@@ -86,7 +88,7 @@ for i=1:3
 end
 display(p)
 
-savefig("Fig 2a three feature vectors.pdf")
+savefig(joinpath(TARGETDIR, "Fig 2a three feature vectors.pdf"))
 
 # %% [markdown]
 # ## Jaccard distances between three example cells

@@ -20,6 +20,8 @@
 # %%
 using OpticLobe
 
+include("config.jl")
+
 # %%
 using NamedArrays, SparseArrays
 
@@ -264,7 +266,7 @@ plot(
     )
 
 # %%
-savefig("Fig S3c example 2D discriminator.pdf")
+savefig(joinpath(TARGETDIR, "Fig S3c example 2D discriminator.pdf"))
 
 # %% [markdown]
 # ## 2D discriminators for all families that contain more than one type, excluding photoreceptors

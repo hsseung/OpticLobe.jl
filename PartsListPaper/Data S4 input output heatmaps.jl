@@ -22,6 +22,8 @@
 # %%
 using OpticLobe
 
+include("config.jl")
+
 # %% jupyter={"outputs_hidden": false}
 # using NamedArrays
 using Plots

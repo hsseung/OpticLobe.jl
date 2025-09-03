@@ -20,6 +20,8 @@
 # %%
 using OpticLobe
 
+include("config.jl")
+
 # %%
 using SparseArrays, NamedArrays, LinearAlgebra, Distances
 using StatsBase
@@ -134,7 +136,7 @@ plot(plt..., h,
 )
 
 # %%
-TARGETDIR = "."
+# Now using shared config.jl
 
 # %%
 savefig(joinpath(TARGETDIR, "Fig S3ab TypeRadii.pdf"))
