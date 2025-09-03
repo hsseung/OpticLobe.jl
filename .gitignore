@@ -3,3 +3,7 @@
 # Ignore generated plot files
 *.pdf
 *.svg
+
+# macOS system files
+.DS_Store
+**/.DS_Store
