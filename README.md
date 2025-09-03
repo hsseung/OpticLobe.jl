@@ -177,7 +177,7 @@ The `PartsListPaper/` directory contains complete analysis scripts that reproduc
 ```bash
 cd PartsListPaper
 julia --project=. "Fig 1 cell numbers.jl"    # Reproduce Figure 1
-julia --project=. "Dendrogram.jl"            # Hierarchical clustering
+julia --project=. "dendrograms.jl"            # Hierarchical clustering
 ```
 
 See `PartsListPaper/README.md` for detailed usage instructions.
