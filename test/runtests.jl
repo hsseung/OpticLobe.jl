@@ -6,9 +6,10 @@ using Preferences
     # Test synapse counts based on version
     synapse_version = Preferences.load_preference(OpticLobe, "default_synapses", "Princeton")
     total_synapses = sum(W)
-    
+
+    # these numbers are after deleting T1 outgoing synapses
     if synapse_version == "Princeton"
-        @test total_synapses == 76944499
+        @test total_synapses == 76891137
     elseif synapse_version == "Buhmann"  
         @test total_synapses == 54483992
     end
