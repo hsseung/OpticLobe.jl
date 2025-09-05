@@ -159,8 +159,16 @@ Pm06      │ 17143
 ### Analysis Functions
 - `toppre(celltype, n)` - Top n presynaptic partners of a cell type
 - `toppost(cellid, n)` - Top n postsynaptic partners of a cell  
-- `type2ids(typename)` - Get all cell IDs belonging to a cell type
+- `type2ids(typename; side="right")` - Get all cell IDs belonging to a cell type
 - `showall(vector)` - Display all elements of a named vector
+
+### Pathway Analysis (with Side Filtering)
+Functions for analyzing synaptic pathways with hemisphere-specific filtering. The `side` parameter restricts analysis to left or right hemisphere cells (default: "right").
+
+- `tracetypes(celltypes; side="right")` - Multi-step connectivity through cell type sequence
+- `tracebacktypes(celltypes; side="right")` - Like tracetypes but with normalized connectivity
+- `preimage(pretype, posttype; side="right")` - Spatial map of presynaptic inputs by type  
+- `prepreimage(prepretype, pretype, posttype; side="right")` - Two-step presynaptic maps
 
 ### Visualization & Integration
 - `codex_open(cellid)` - Open cell in FlyWire Codex browser
@@ -174,7 +182,10 @@ Pm06      │ 17143
 
 ## Analysis Examples
 
-The `PartsListPaper/` directory contains complete analysis scripts that reproduce the figures from the Nature papers. Each script has its own environment with all required dependencies.
+The repository contains complete analysis scripts that reproduce the figures from both Nature papers:
+
+### Parts List Paper Analysis
+The `PartsListPaper/` directory contains scripts for **Matsliah, Yu, et al.**, [Neuronal parts list and wiring diagram for a visual system](https://doi.org/10.1038/s41586-024-07981-1), *Nature* 634:166-180 (2024).
 
 ```bash
 cd PartsListPaper
@@ -183,6 +194,17 @@ julia --project=. "dendrograms.jl"            # Hierarchical clustering
 ```
 
 See `PartsListPaper/README.md` for detailed usage instructions.
+
+### Form Vision Paper Analysis  
+The `FormVisionPaper/` directory contains scripts for **Seung**, [Predicting visual function by interpreting a neuronal wiring diagram](https://doi.org/10.1038/s41586-024-07953-5), *Nature* 634:113-123 (2024).
+
+```bash
+cd FormVisionPaper
+julia --project=. FiguresSpatial.jl          # Spatial analysis and montages
+julia --project=. FiguresNonspatial.jl       # Non-spatial connectivity analysis
+```
+
+See `FormVisionPaper/README.md` for Jupytext setup and detailed instructions.
 
 ## Data Sources
 
