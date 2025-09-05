@@ -101,7 +101,7 @@ register(DataDep("Codex Princeton connections no threshold",
 
         Citation: Matsliah et al.
 
-    This file is 202MB
+    This file is 263MB
     """,
     joinpath(DOWNLOADS, "connections_princeton_no_threshold.csv.gz"),
     ));
@@ -115,7 +115,19 @@ register(DataDep("Codex cell types",
 
         Citation: Matsliah et al.
 
-    This file is 202MB
     """,
     joinpath(DOWNLOADS, "consolidated_cell_types.csv.gz"),
+    ));
+
+register(DataDep("Codex visual neuron columns",
+    """
+    Dataset: FlyWire v783
+    Author:
+    License:
+    Website: codex.flywire.ai
+
+        Citation: Matsliah et al.
+
+    """,
+    joinpath(DOWNLOADS, "column_assignment.csv.gz"),
     ));

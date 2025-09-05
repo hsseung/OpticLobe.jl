@@ -120,14 +120,17 @@ println("codex and neuroglancer utilities")
 include("flywire.jl")
 export codex_open, ng_open, ng_hyper
 
-println("pq coordinates of columns")
-include("columncoordinates.jl")
-include("columncell.jl")
+println("pq coordinates of columns and cells")
+#include("columncoordinates.jl")
+#include("columncell.jl")
 #export column2pq, pq2column, columns_df
-export pq2column
+#export pq2column
 
-include("cellcoordinates.jl")
-export id2pq
+#include("cellcoordinates.jl")
+#export id2pq
+
+include("columnassignment.jl")
+export id2pq, pq2column
 
 include("hexgraphics.jl")
 export rect2hex, square2hex, crop, montage

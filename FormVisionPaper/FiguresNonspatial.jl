@@ -7,11 +7,11 @@
 #       extension: .jl
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.16.2
+#       jupytext_version: 1.17.3
 #   kernelspec:
-#     display_name: Julia 1.10.4
+#     display_name: Julia 1.11.6
 #     language: julia
-#     name: julia-1.10
+#     name: julia-1.11
 # ---
 
 # %% [markdown]
@@ -22,6 +22,8 @@
 
 # %%
 using OpticLobe
+
+include("config.jl")
 
 # %%
 using NamedArrays, SparseArrays
@@ -149,7 +151,7 @@ heatmap(infraction[formtypes, formtypespost],
 heatmap(infraction[formtypes, formtypespost], xticks = strings2ticks(formtypespost), axis = ([], false), legend = :none)
 
 # %%
-savefig("Dm3TmYPopulationInteractions.pdf")
+savefig(joinpath(TARGETDIR, "Dm3TmYPopulationInteractions.pdf"))
 
 # %% [markdown]
 # ## Figure 3b. identify connections included in cartoon wiring diagram
@@ -336,7 +338,7 @@ plot(h[[1 4 7 2 5 8 3 6]]...,
 )
 
 # %%
-savefig("DisynapticInFractions.pdf")
+savefig(joinpath(TARGETDIR, "DisynapticInFractions.pdf"))
 
 # %%
 type2nt[["TmY10", "TmY11", "Tm20", "Tm25", "Tm27", "Tm8a", "Tm16", "Tm7"]]
@@ -494,7 +496,7 @@ plot(h...,
 )
 
 # %%
-savefig("Dm3InOut.pdf")
+savefig(joinpath(TARGETDIR, "Dm3InOut.pdf"))
 
 # %% [markdown]
 # ## dendrogram for Dm3 and TmY types
@@ -579,7 +581,7 @@ plot(h...,
 )
 
 # %%
-savefig("Tm1InOut.pdf")
+savefig(joinpath(TARGETDIR, "Tm1InOut.pdf"))
 
 # %% [markdown]
 # ## Figure S4. TmY4 and TmY9 four panels
@@ -637,7 +639,7 @@ plot(h...,
 )
 
 # %%
-savefig("TmY4TmY9InOut.pdf")
+savefig(joinpath(TARGETDIR, "TmY4TmY9InOut.pdf"))
 
 # %% [markdown]
 # ## Figure S5. TmY4 and TmY9 four panels, reduced
@@ -695,7 +697,7 @@ plot(h...,
 )
 
 # %%
-savefig("TmY4TmY9InOutReduced.pdf")
+savefig(joinpath(TARGETDIR, "TmY4TmY9InOutReduced.pdf"))
 
 # %% [markdown]
 # ## Y3 and TmY5a
@@ -743,7 +745,7 @@ plot(h...,
 )
 
 # %%
-savefig("Y3TmY5aInOut.pdf")
+savefig(joinpath(TARGETDIR, "Y3TmY5aInOut.pdf"))
 
 # %% [markdown]
 # ## T2a
@@ -788,7 +790,7 @@ plot(T2aoutputs,
     )
 
 # %%
-savefig("T2aInOut.pdf")
+savefig(joinpath(TARGETDIR, "T2aInOut.pdf"))
 
 # %% [markdown]
 # ## Figure S8. Y3 and T2a
@@ -814,7 +816,7 @@ plot(h...,
 )
 
 # %%
-savefig("Y3T2aInOut.pdf")
+savefig(joinpath(TARGETDIR, "Y3T2aInOut.pdf"))
 
 # %% [markdown]
 # ## Figure S9. TmY10 TmY11
@@ -862,7 +864,7 @@ plot(h...,
 )
 
 # %%
-savefig("TmY10TmY11InOut.pdf")
+savefig(joinpath(TARGETDIR, "TmY10TmY11InOut.pdf"))
 
 # %% [markdown]
 # ## Figure S10. LC10e and LC15
@@ -916,7 +918,7 @@ plot(h...,
 )
 
 # %%
-savefig("LC10eLC15InOut.svg")
+savefig(joinpath(TARGETDIR, "LC10eLC15InOut.svg"))
 
 # %% [markdown]
 # ## search for VPNs with high infraction from TmY
@@ -976,7 +978,7 @@ toppre("TmY9q", nresults = 30)
 toppre("LTe08")
 
 # %%
-toppre("CB0472")
+# toppre("CB0472") # doesn't exist in latest annotations
 
 # %%
 toppre("LTe28")
