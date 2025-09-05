@@ -1,27 +1,49 @@
-# OpticLobe
+# OpticLobe.jl
 
-Exploring the neurons and connections of the *Drosophila* optic lobe.
+A Julia package for exploring the neurons and connections of the *Drosophila* optic lobe, based on the FlyWire connectome (v783 proofreading).
 
 [![Build Status](https://github.com/hsseung/OpticLobe.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/hsseung/OpticLobe.jl/actions/workflows/CI.yml?query=branch%3Amain)
 
-Code to accompany two visual system papers in the [FlyWire paper package](https://www.nature.com/collections/hgcfafejia).
-* Matsliah, Yu, et al., [Neuronal parts list and wiring diagram for a visual system](https://doi.org/10.1038/s41586-024-07981-1), *Nature* 634:166-180 (2024).
-* Seung, [Predicting visual function by interpreting a neuronal wiring diagram](https://doi.org/10.1038/s41586-024-07953-5), *Nature* 634:113-123 (2024). 
+## About
 
-Version 783 of proofreading.
+This package accompanies two visual system papers in the [FlyWire paper package](https://www.nature.com/collections/hgcfafejia):
 
-See https://codex.flywire.ai for more information
+* **Matsliah, Yu, et al.**, [Neuronal parts list and wiring diagram for a visual system](https://doi.org/10.1038/s41586-024-07981-1), *Nature* 634:166-180 (2024)
+* **Seung**, [Predicting visual function by interpreting a neuronal wiring diagram](https://doi.org/10.1038/s41586-024-07953-5), *Nature* 634:113-123 (2024)
+
+The package provides easy access to:
+- **740 visual cell types** (230 intrinsic + 510 boundary types)
+- **Synaptic connectivity matrices** at cell and type levels  
+- **Cell morphology and spatial coordinates**
+- **Analysis tools and visualization utilities**
+
+All data is automatically downloaded from archived sources and processed into convenient Julia data structures.
 
 ## Installation
 
-``` julia
+```julia
 julia> import Pkg
 julia> Pkg.add(url = "https://github.com/hsseung/OpticLobe.jl")
 julia> using OpticLobe
 ```
-You may get "waiting for IO to finish" error messages, which you should be able to ignore.
 
-## Synopsis
+**Note**: The first time you load the package, it will automatically download ~350MB of data files. You may see "waiting for IO to finish" messages, which can be ignored.
+
+## Synapse Versions
+
+The package supports two synapse detection methods:
+- **Princeton** (default): Latest synapse predictions with improved accuracy
+- **Buhmann**: Original predictions from Buhmann et al. (2021)
+
+```julia
+# Switch to Buhmann synapses
+set_default_synapses("Buhmann")    # Restart Julia to take effect
+
+# Load both versions simultaneously (uses more memory)  
+enable_both_synapses(true)         # Restart Julia to take effect
+```
+
+## Examples
 
 IDs of five `Tm1` cells.
 ``` julia
@@ -100,47 +122,73 @@ LMa5      │ 17871
 Pm06      │ 17143
 ```
 
-## Global variables
+## Data Structures
 
-ind2id
-id2ind
+### Cell Identification
+- `ind2id`, `id2ind` - Convert between cell indices and FlyWire root IDs
+- `ind2type` - Map cell indices to cell type names  
+- `id2pq` - Spatial coordinates (hexagonal p,q system)
 
-intrinsictypes
-boundarytypes
-centraltypes
-visualtypes
-alltypes
-ind2type 
+### Cell Type Classifications  
+- `intrinsictypes` (230) - Neurons intrinsic to the optic lobe
+- `boundarytypes` (510) - Visual projection and centrifugal neurons
+- `othertypes` (7805) - All other cell types (central brain, etc.)
+- `visualtypes` - Combined intrinsic + boundary types (740 total)
+- `alltypes` - All cell types in the dataset
 
-W
-A
-Ai
+### Connectivity Matrices
+- `W` - Cell-to-cell synaptic weight matrix (sparse, ~130K × 130K cells)
+- `Wtt` - Type-to-type connectivity (aggregated synapses)
+- `Wct` - Cell-to-type connectivity 
+- `Wtc` - Type-to-cell connectivity
+- `infraction`, `outfraction` - Normalized connectivity fractions
+- `inmean`, `outmean` - Mean synapses per cell by type
 
-Wtt
-Wct
-Wtc
-infraction
-outfraction
-inmean
-outmean
+### Cell Type Assignment
+- `A` - Boolean matrix: cells × all types  
+- `Ai` - Boolean matrix: cells × intrinsic types only
 
-class2families
-family2types
+### Type Hierarchies
+- `class2families` - Visual classes to type families mapping
+- `family2types` - Type families to individual types mapping
 
-## useful functions
+## Useful Functions
 
-toppre
-toppost
+### Analysis Functions
+- `toppre(celltype, n)` - Top n presynaptic partners of a cell type
+- `toppost(cellid, n)` - Top n postsynaptic partners of a cell  
+- `type2ids(typename)` - Get all cell IDs belonging to a cell type
+- `showall(vector)` - Display all elements of a named vector
 
-showall, strings2ticks, type2ids, convert2arrows
+### Visualization & Integration
+- `codex_open(cellid)` - Open cell in FlyWire Codex browser
+- `ng_open(cellids)` - Open cells in Neuroglancer 3D viewer
+- `ng_hyper(cellids)` - Create Neuroglancer hyperlink
+- `strings2ticks(strings)` - Convert strings to plot tick marks
 
-codex_open
+### Spatial Analysis
+- `pq2column(p, q)` - Convert hex coordinates to column ID
+- Hexagonal visualization tools in `hexgraphics` module
 
-ng_open
+## Analysis Examples
 
-ng_hyper
+The `PartsListPaper/` directory contains complete analysis scripts that reproduce the figures from the Nature papers. Each script has its own environment with all required dependencies.
 
-## Installation
-Building the package downloads data files from the FlyWire Codex, and 
-processes the data to create some useful global variables.
+```bash
+cd PartsListPaper
+julia --project=. "Fig 1 cell numbers.jl"    # Reproduce Figure 1
+julia --project=. "dendrograms.jl"            # Hierarchical clustering
+```
+
+See `PartsListPaper/README.md` for detailed usage instructions.
+
+## Data Sources
+
+All data is automatically downloaded via DataDeps.jl from archived sources:
+- **FlyWire Codex data** (v783 proofreading) archived on Zenodo
+- **Cell morphology** and spatial coordinates  
+- **Synaptic connectivity** (Princeton and Buhmann predictions)
+- **Cell type annotations** and hierarchical classifications
+
+Data files are cached locally after first download (~350MB total).
 
