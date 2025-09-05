@@ -27,21 +27,7 @@ julia> Pkg.add(url = "https://github.com/hsseung/OpticLobe.jl")
 julia> using OpticLobe
 ```
 
-**Note**: The first time you load the package, it will automatically download ~350MB of data files. You may see "waiting for IO to finish" messages, which can be ignored.
-
-## Synapse Versions
-
-The package supports two synapse detection methods:
-- **Princeton** (default): Latest synapse predictions with improved accuracy
-- **Buhmann**: Original predictions from Buhmann et al. (2021)
-
-```julia
-# Switch to Buhmann synapses
-set_default_synapses("Buhmann")    # Restart Julia to take effect
-
-# Load both versions simultaneously (uses more memory)  
-enable_both_synapses(true)         # Restart Julia to take effect
-```
+**Note**: The first time you load the package, it will automatically download data files. You may see "waiting for IO to finish" messages, which can be ignored.
 
 ## Examples
 
@@ -186,9 +172,6 @@ See `PartsListPaper/README.md` for detailed usage instructions.
 
 All data is automatically downloaded via DataDeps.jl from archived sources:
 - **FlyWire Codex data** (v783 proofreading) archived on Zenodo
-- **Cell morphology** and spatial coordinates  
-- **Synaptic connectivity** (Princeton and Buhmann predictions)
-- **Cell type annotations** and hierarchical classifications
 
-Data files are cached locally after first download (~350MB total).
+Data files are cached locally after first download.
 
