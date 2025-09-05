@@ -7,11 +7,11 @@
 #       extension: .jl
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.16.2
+#       jupytext_version: 1.17.3
 #   kernelspec:
-#     display_name: Julia 1.10.6
+#     display_name: Julia 1.11.6
 #     language: julia
-#     name: julia-1.10
+#     name: julia-1.11
 # ---
 
 # %% [markdown]
@@ -23,6 +23,8 @@
 
 # %%
 using OpticLobe
+
+include("config.jl")
 
 # %%
 using Missings, MissingsAsFalse
@@ -101,48 +103,6 @@ function path2label(v::Vector{String})
     return join(v, "→")
 end
 
-# %%
-# """
-#     `im` - square matrix of size m = 2k + 1
-#     output is always vector of length m
-#     locations are:
-#         -k:k for cardinal orientations
-#         (-k:k)*sqrt(3)/2 for orthogonal orientations
-# """
-# function hexproject(im::Matrix, axis)
-#     @assert size(im, 1) == size(im, 2)
-#     m = size(im, 1)
-#     @assert isodd(m)
-#     w = [0.5, 1, 0.5]
-#     k = m ÷ 2
-#     P = zeros(Int32, m, m) .+ collect(-k:k)
-#     Q = zeros(Int32, m, m) .+ collect(-k:k)'
-# # cardinal orientations, lattice spacing
-#     if axis == :v    # P + Q runs from -2k:2k, output will run from -k:k
-#         proj = counts(P + Q, weights(im))
-#         proj = dropdims(conv(proj[:, newaxis, :], w[:, newaxis, newaxis], pad = 1, stride = 2), dims = 2)
-#         return proj
-#     elseif axis == :p  # P + Q runs from -3k:3k. crop to -2k:2k
-#         proj = counts(2*P - Q, -2*k:2*k, weights(im))
-#         proj = dropdims(conv(proj[:, newaxis, :], w[:, newaxis, newaxis], pad = 1, stride = 2), dims = 2)
-#         return proj
-#     elseif axis == :q
-#         proj = counts(2*Q - P, -2*k:2*k, weights(im))
-#         proj = dropdims(conv(proj[:, newaxis, :], w[:, newaxis, newaxis], pad = 1, stride = 2), dims = 2)
-#         return proj
-# # orthogonal orientations, sqrt(3)/2 times lattice spacing
-#     elseif axis == :h
-#         proj = counts(Q - P, -k:k, weights(im))
-#         return proj
-#     elseif axis == :p⊥
-#         proj = counts(Q, weights(im))
-#         return proj
-#     elseif axis == :q⊥
-#         proj = counts(P, weights(im))
-#         return proj
-#     end
-# end
-
 # %% [markdown]
 # ## add Dm3 and TmY locations to `id2pq`
 
@@ -150,13 +110,16 @@ end
 # missing means that there is zero connectivity
 for posttype in vcat(Dm3types, TmYtypes, "Y3")
     rfs = preimage("Tm1", posttype);
-    @mfalse for (i, id) in enumerate(ind2id[ind2type .== posttype])
+    @mfalse for (i, id) in enumerate(ind2id[(ind2type .== posttype) .& (ind2side .== "right")])
         center = findcenter(float(rfs[i]), seven)
         if ~ismissing(center)
             id2pq[id] = center
         end
     end
 end
+
+# special case that has no Tm1 inputs (bad proofreading)
+id2pq[720575940618964225] = findcenter(prepreimage("Mi1", "Y3", 720575940618964225), seven)
 
 # %% [markdown]
 # ## Fig 1 Tm1-Dm3 connectivity maps
@@ -265,7 +228,7 @@ hangle = boxplot(celltypes, vcat(values(Dm3angles)...)*180/pi, ylabel = "orienta
 plot(hangle, haspect, size = (800, 300), left_margin = 5Measures.mm, bottom_margin = 3Measures.mm)
 
 # %%
-savefig("Tm1Dm3anglesaspects.pdf")
+savefig(joinpath(TARGETDIR, "Tm1Dm3anglesaspects.pdf"))
 
 # %% [markdown]
 # ### Fig 1klm Dm3 projections
@@ -310,7 +273,7 @@ h = [groupedbar(-radius:radius, [a c], yerror = [b d],
 plot(h..., layout = (1, 3), size = (1000, 200), bottom_margin = 10Measures.mm, left_margin = 5Measures.mm)
 
 # %%
-savefig("Dm3projections.pdf")
+savefig(joinpath(TARGETDIR, "Dm3projections.pdf"))
 
 # %% [markdown]
 # ## Fig 2 Tm1-TmY connectivity maps
@@ -338,7 +301,7 @@ preview()
 # ### Fig 2g example TmY4 cells
 
 # %%
-@mfalse ids = type2ids("TmY4")
+ids = type2ids("TmY4")
 # Drawing(800, 800, "Tm1TmY4ExamplesAligned.pdf")
 @drawsvg rfs = celltriad("Tm1", ids[13:15], radius = 5, hexelsize = 12) 430 500
 
@@ -429,7 +392,7 @@ hangle = boxplot(celltypes, vcat(values(TmYangles)...)*180/pi, ylabel = "orienta
 plot(hangle, haspect, size = (800, 300), left_margin = 5Measures.mm, bottom_margin = 3Measures.mm)
 
 # %%
-savefig("Tm1TmYanglesaspects.pdf")
+savefig(joinpath(TARGETDIR, "Tm1TmYanglesaspects.pdf"))
 
 # %% [markdown]
 # ### Fig 2mno TmY projections
@@ -474,7 +437,7 @@ h = [groupedbar(-radius:radius, [a c], yerror = [b d],
 plot(h..., layout = (1, 3), size = (1000, 200), bottom_margin = 10Measures.mm, left_margin = 5Measures.mm)
 
 # %%
-savefig("TmYprojections.pdf")
+savefig(joinpath(TARGETDIR, "TmYprojections.pdf"))
 
 # %% [markdown]
 # ## Fig 4
@@ -494,7 +457,7 @@ crfsavg = mean.(skipmissing.(crfscrop))
 crfsavgellipses = NamedArray(ellipsesummary.(crfsavg), Dm3types)  # only the ellipse is used here
 
 corner = 260
-Drawing(1200, 1200, "Dm3ERF.pdf")
+Drawing(1200, 1200, joinpath(TARGETDIR, "Dm3ERF.pdf"))
 #Drawing(1200, 1200)
 
 target = "Dm3p"
@@ -802,7 +765,7 @@ end
 plot(h..., layout = (1, 3), size = (1000, 250), bottom_margin = 10Measures.mm, left_margin = 5Measures.mm)
 
 # %%
-savefig("T2aDm3ERFprojections.pdf")
+savefig(joinpath(TARGETDIR, "T2aDm3ERFprojections.pdf"))
 
 # %% [markdown]
 # ## Fig 5
@@ -825,7 +788,7 @@ crfsavgellipses = NamedArray(ellipsesummary.(crfsavg), TmYtypes)  # only the ell
 corner = 260
 hexelsize = 7
 
-Drawing(1200, 1200, "TmYERF.pdf")
+Drawing(1200, 1200, joinpath(TARGETDIR, "TmYERF.pdf"))
 #Drawing(1200, 1200)
 
 target = "TmY4"
@@ -1056,7 +1019,7 @@ end
 plot(h..., layout = (1, 3), size = (1000, 250), bottom_margin = 10Measures.mm, left_margin = 5Measures.mm)
 
 # %%
-savefig("TmYTmYERFprojections.pdf")
+savefig(joinpath(TARGETDIR, "TmYTmYERFprojections.pdf"))
 
 # %% [markdown]
 # ## Fig 6 LC15
@@ -1079,7 +1042,6 @@ end
 # ### Fig 6b LC15 average disynaptic maps
 
 # %%
-thres = 0.01
 scores = [scorepath([c1, c2, "LC15"]) for c1 in hexel, c2 in nothexel]
 scores = NamedArray(scores, names = (hexel, nothexel))
 scoresums = NamedArray(sum(scores.array, dims = 1)[:], nothexel)
@@ -1087,7 +1049,9 @@ scoremaxs = NamedArray(maximum(scores.array, dims = 1)[:], nothexel)
 
 # no need to exclude inhibitory intermediaries here, as top six are predicted excitatory
 # contrast with LC10ev
-intermediaries = nothexel[scoresums.array .> thres]
+#thres = 0.01
+#intermediaries = nothexel[scoresums.array .> thres]
+intermediaries = nothexel[sortperm(scoresums.array, rev=true)[1:6]]   # top six
 
 p = sortperm(scoresums[intermediaries], rev = true)
 
@@ -1111,7 +1075,7 @@ rfscrop = [passmissing(crop).(rf.array, id2pq.(type2ids("LC15")), 8, 1) for rf i
 rfsavg = [mean(skipmissing(rf)) for rf in rfscrop]
 
 #Drawing(700, 600)
-Drawing(700, 600, "LC15.pdf")
+Drawing(700, 600, joinpath(TARGETDIR, "LC15.pdf"))
     origin()
     ellipses = ellipsesummary.(rfsavg)
     hexannulus(rfsavg, orbitscale = 1.5, text = type2label.(intermediaries[p]), ellipses = ellipses, ellipsecolors = cseries, maxvals = true)
@@ -1139,7 +1103,7 @@ preview()
 ellipses = [ellipsesummary.(rf.array) for rf in rfs]  # for individual cells, rfs computed above
 hexelsize = 7
 
-Drawing(500, 600, "Tm1LC15Ellipses.pdf")
+Drawing(500, 600, joinpath(TARGETDIR, "Tm1LC15Ellipses.pdf"))
 #Drawing(500, 600)
 origin()
 scale(3)
@@ -1226,7 +1190,7 @@ cseries = distinguishable_colors(6, ColorSchemes.hot[:], dropseed=true)
 rfscrop = [passmissing(crop).(rf.array, id2pq.(LC10ev), 8, 1) for rf in rfs]
 rfsavg = [mean(skipmissing(rf)) for rf in rfscrop]
 
-Drawing(700, 600, "LC10ev.pdf")
+Drawing(700, 600, joinpath(TARGETDIR, "LC10ev.pdf"))
 #Drawing(700, 600)
     origin()
     ellipses = ellipsesummary.(rfsavg)
@@ -1267,7 +1231,7 @@ paths = Vector{Union{String, Vector{<:Integer}}}[["Tm1", "TmY9q", LC10ev], ["Tm1
 rfs = inmaps.(tracebacktypes.(paths))
 ellipses = [ellipsesummary.(rf.array) for rf in rfs]
 
-Drawing(600, 800, "Tm1LC10evEllipses.pdf")
+Drawing(600, 800, joinpath(TARGETDIR, "Tm1LC10evEllipses.pdf"))
 #Drawing(600, 800)
 origin()
 scale(3)
@@ -1303,7 +1267,7 @@ d = [collect(e.center)/sqrt(3) for e in ellipses[3]] - [collect(e.center)/sqrt(3
 
 # %%
 hexelsize = 50
-Drawing(600, 600, "LC10eDisplacements.pdf")
+Drawing(600, 600, joinpath(TARGETDIR, "LC10eDisplacements.pdf"))
 #Drawing(600, 600)
 origin()
 setcolor("gray")
@@ -1336,7 +1300,7 @@ function valuesandtext(values, textstring, fmtstring = "%3d")
 end    
 
 # %%
-Drawing(900, 800, "Mi4Tm2L3Tm9-Dm3.pdf")
+Drawing(900, 800, joinpath(TARGETDIR, "Mi4Tm2L3Tm9-Dm3.pdf"))
 #Drawing(900, 800)
 origin()
 Luxor.translate(-200, -200)
@@ -1382,7 +1346,7 @@ function maparray(pretypes, posttypes; radius = 6, spacing = 140)
 end
 
 # %%
-Drawing(1000, 1000, "Dm3TmYAllAverages.pdf")
+Drawing(1000, 1000, joinpath(TARGETDIR, "Dm3TmYAllAverages.pdf"))
 spacing = 250
 #Drawing(1000, 1000)
 origin()
@@ -1416,117 +1380,70 @@ preview()
 # %% [markdown]
 # ## Data S3 Dm3 individual cells
 # TODO: update to `distinguishable_colors`
+#
+# function generate_target_montages(target::String, n_monosynaptic::Int=5; extra_paths::Vector=[])
+#     # Create target directory
+#     target_dir = joinpath(TARGETDIR, target)
+#     if !isdir(target_dir)
+#         mkpath(target_dir)
+#     end
+#     
+#     # Find monosynaptic connections
+#     monosynaptic = names(first(sort(infraction[hexel, target], rev=true), n_monosynaptic), 1)
+#     
+#     # Calculate disynaptic scores
+#     scores = [infraction[c1, c2]*infraction[c2, target] for c1 in hexel, c2 in nothexel]
+#     scores = NamedArray(scores, names = (hexel, nothexel))
+#     ignore, winners = findmax(scores, dims=1)
+#     sources = hexel[getindex.(winners, 1)][:]
+#     
+#     scoresums = NamedArray(sum(scores.array, dims = 1)[:], nothexel)
+#     p = sortperm(scoresums, rev = true)
+#     disynaptic = [sources[p] nothexel[p]][1:10, :]
+#     
+#     # Create paths
+#     paths = vcat(
+#         [[t, target] for t in monosynaptic],
+#         [[t..., target] for t in eachrow(disynaptic)],
+#         extra_paths
+#     )
+#
+#     # Compute receptive fields
+#     rfs = inmaps.(tracebacktypes.(paths))
+#     
+#     # Set up colors
+#     tocolor = length.(paths) .>= 3
+#     tocolor[1] = true
+#     ellipsecolors = Vector{Any}(nothing, length(paths))
+#     ellipsecolors[tocolor] .= distinguishable_colors(sum(tocolor))
+#     
+#     # Generate montages
+#     @showprogress for id in type2ids(target)
+#         ims = [rf[Name(id)] for rf in rfs]
+#         montage(ims, fname = joinpath(target_dir, "$id.pdf"), 
+#                labels = path2label.(paths), hexelsize = 6, ellipses = true, 
+#                ellipsecolors = ellipsecolors, maxvals = true, 
+#                centers = repeat([id2pq[id]], length(ims)), summary = 1)
+#     end
+# end
 
 # %% [markdown]
 # ### Dm3p
 
 # %%
-target = "Dm3p"
-monosynaptic = names(first(sort(infraction[hexel, target], rev=true), 5), 1)
-
-scores = [infraction[c1, c2]*infraction[c2, target] for c1 in hexel, c2 in nothexel]
-scores = NamedArray(scores, names = (hexel, nothexel))
-ignore, winners = findmax(scores, dims=1)
-sources = hexel[getindex.(winners, 1)][:]
-
-scoresums = NamedArray(sum(scores.array, dims = 1)[:], nothexel)
-scoremaxs = NamedArray(maximum(scores.array, dims = 1)[:], nothexel)
-
-#p = sortperm(scoremaxs, rev = true)
-p = sortperm(scoresums, rev = true)
-
-disynaptic = [sources[p] nothexel[p]][1:10, :]
-
-paths = vcat(
-    [[t, target] for t in monosynaptic],
-    [[t..., target] for t in eachrow(disynaptic)]
-    )
-
-rfs = inmaps.(tracebacktypes.(paths));
-
-tocolor = length.(paths) .== 3
-tocolor[1] = true
-ellipsecolors = Vector{Any}(nothing, length(paths))
-ellipsecolors[tocolor] .= distinguishable_colors(sum(tocolor))
-
-@showprogress for id in type2ids(target)
-    ims = [rf[Name(id)] for rf in rfs]
-    montage(ims, fname = "$target/$id.pdf", labels = path2label.(paths), hexelsize = 6, ellipses = true, ellipsecolors = ellipsecolors, maxvals = true, centers = repeat([id2pq[id]], length(ims)), summary = 1)
-end
+generate_target_montages("Dm3p", 5)
 
 # %% [markdown]
 # ### Dm3q
 
 # %%
-target = "Dm3q"
-monosynaptic = names(first(sort(infraction[hexel, target], rev=true), 5), 1)
-
-scores = [infraction[c1, c2]*infraction[c2, target] for c1 in hexel, c2 in nothexel]
-scores = NamedArray(scores, names = (hexel, nothexel))
-ignore, winners = findmax(scores, dims=1)
-sources = hexel[getindex.(winners, 1)][:]
-
-scoresums = NamedArray(sum(scores.array, dims = 1)[:], nothexel)
-scoremaxs = NamedArray(maximum(scores.array, dims = 1)[:], nothexel)
-
-#p = sortperm(scoremaxs, rev = true)
-p = sortperm(scoresums, rev = true)
-
-disynaptic = [sources[p] nothexel[p]][1:10, :]
-
-paths = vcat(
-    [[t, target] for t in monosynaptic],
-    [[t..., target] for t in eachrow(disynaptic)]
-    )
-
-rfs = inmaps.(tracebacktypes.(paths));
-
-tocolor = length.(paths) .== 3
-tocolor[1] = true
-ellipsecolors = Vector{Any}(nothing, length(paths))
-ellipsecolors[tocolor] .= distinguishable_colors(sum(tocolor))
-
-@showprogress for id in type2ids(target)
-    ims = [rf[Name(id)] for rf in rfs]
-    montage(ims, fname = "$target/$id.pdf", labels = path2label.(paths), hexelsize = 6, ellipses = true, ellipsecolors = ellipsecolors, maxvals = true, centers = repeat([id2pq[id]], length(ims)), summary = 1)
-end
+generate_target_montages("Dm3q", 5)
 
 # %% [markdown]
 # ### Dm3v
 
 # %%
-target = "Dm3v"
-monosynaptic = names(first(sort(infraction[hexel, target], rev=true), 5), 1)
-
-scores = [infraction[c1, c2]*infraction[c2, target] for c1 in hexel, c2 in nothexel]
-scores = NamedArray(scores, names = (hexel, nothexel))
-ignore, winners = findmax(scores, dims=1)
-sources = hexel[getindex.(winners, 1)][:]
-
-scoresums = NamedArray(sum(scores.array, dims = 1)[:], nothexel)
-scoremaxs = NamedArray(maximum(scores.array, dims = 1)[:], nothexel)
-
-#p = sortperm(scoremaxs, rev = true)
-p = sortperm(scoresums, rev = true)
-
-disynaptic = [sources[p] nothexel[p]][1:10, :]
-
-paths = vcat(
-    [[t, target] for t in monosynaptic],
-    [[t..., target] for t in eachrow(disynaptic)]
-    )
-
-rfs = inmaps.(tracebacktypes.(paths));
-
-tocolor = length.(paths) .== 3
-tocolor[1] = true
-ellipsecolors = Vector{Any}(nothing, length(paths))
-ellipsecolors[tocolor] .= distinguishable_colors(sum(tocolor))
-
-@showprogress for id in type2ids(target)
-    ims = [rf[Name(id)] for rf in rfs]
-    montage(ims, fname = "$target/$id.pdf", labels = path2label.(paths), hexelsize = 6, ellipses = true, ellipsecolors = ellipsecolors, maxvals = true, centers = repeat([id2pq[id]], length(ims)), summary = 1)
-end
+generate_target_montages("Dm3v", 5)
 
 # %% [markdown]
 # ## Data S4 TmY individual cells (supplementary data)
@@ -1535,122 +1452,19 @@ end
 # ### TmY4
 
 # %%
-target = "TmY4"
-monosynaptic = names(first(sort(infraction[hexel, target], rev=true), 4), 1)
-
-scores = [infraction[c1, c2]*infraction[c2, target] for c1 in hexel, c2 in nothexel]
-scores = NamedArray(scores, names = (hexel, nothexel))
-ignore, winners = findmax(scores, dims=1)
-sources = hexel[getindex.(winners, 1)][:]
-
-scoresums = NamedArray(sum(scores.array, dims = 1)[:], nothexel)
-scoremaxs = NamedArray(maximum(scores.array, dims = 1)[:], nothexel)
-
-#p = sortperm(scoremaxs, rev = true)
-p = sortperm(scoresums, rev = true)
-
-disynaptic = [sources[p] nothexel[p]][1:10, :]
-
-trisynaptic = [["Tm1", "TmY4", "Dm3v",]]
-
-paths = vcat(
-    [[t, target] for t in monosynaptic],
-    [[t..., target] for t in eachrow(disynaptic)],
-    [[t..., target] for t in trisynaptic]
-    )
-
-rfs = inmaps.(tracebacktypes.(paths));
-
-tocolor = length.(paths) .>= 3
-tocolor[1] = true
-ellipsecolors = Vector{Any}(nothing, length(paths))
-ellipsecolors[tocolor] .= distinguishable_colors(sum(tocolor))
-
-@showprogress for id in type2ids(target)
-    ims = [rf[Name(id)] for rf in rfs]
-    montage(ims, fname = "$target/$id.pdf", labels = path2label.(paths), hexelsize = 6, ellipses = true, ellipsecolors = ellipsecolors, maxvals = true, centers = repeat([id2pq[id]], length(ims)), summary = 1)
-end
+generate_target_montages("TmY4", 4, extra_paths=[["Tm1", "TmY4", "Dm3v", "TmY4"]])
 
 # %% [markdown]
 # ### TmY9q
 
 # %%
-target = "TmY9q"
-monosynaptic = names(first(sort(infraction[hexel, target], rev=true), 4), 1)
-
-scores = [infraction[c1, c2]*infraction[c2, target] for c1 in hexel, c2 in nothexel]
-scores = NamedArray(scores, names = (hexel, nothexel))
-ignore, winners = findmax(scores, dims=1)
-sources = hexel[getindex.(winners, 1)][:]
-
-scoresums = NamedArray(sum(scores.array, dims = 1)[:], nothexel)
-scoremaxs = NamedArray(maximum(scores.array, dims = 1)[:], nothexel)
-
-#p = sortperm(scoremaxs, rev = true)
-p = sortperm(scoresums, rev = true)
-
-disynaptic = [sources[p] nothexel[p]][1:10, :]
-
-trisynaptic = [["Tm1", "TmY9q", "Dm3p",]]
-
-paths = vcat(
-    [[t, target] for t in monosynaptic],
-    [[t..., target] for t in eachrow(disynaptic)],
-    [[t..., target] for t in trisynaptic]
-    )
-
-
-rfs = inmaps.(tracebacktypes.(paths));
-
-tocolor = length.(paths) .>= 3
-tocolor[1] = true
-ellipsecolors = Vector{Any}(nothing, length(paths))
-ellipsecolors[tocolor] .= distinguishable_colors(sum(tocolor))
-
-@showprogress for id in type2ids(target)
-    ims = [rf[Name(id)] for rf in rfs]
-    montage(ims, fname = "$target/$id.pdf", labels = path2label.(paths), hexelsize = 6, ellipses = true, ellipsecolors = ellipsecolors, maxvals = true, centers = repeat([id2pq[id]], length(ims)), summary = 1)
-end
+generate_target_montages("TmY9q", 4, extra_paths=[["Tm1", "TmY9q", "Dm3p", "TmY9q"]])
 
 # %% [markdown]
 # ### TmY9q⊥
 
 # %%
-target = "TmY9q⊥"
-monosynaptic = names(first(sort(infraction[hexel, target], rev=true), 4), 1)
-
-scores = [infraction[c1, c2]*infraction[c2, target] for c1 in hexel, c2 in nothexel]
-scores = NamedArray(scores, names = (hexel, nothexel))
-ignore, winners = findmax(scores, dims=1)
-sources = hexel[getindex.(winners, 1)][:]
-
-scoresums = NamedArray(sum(scores.array, dims = 1)[:], nothexel)
-scoremaxs = NamedArray(maximum(scores.array, dims = 1)[:], nothexel)
-
-#p = sortperm(scoremaxs, rev = true)
-p = sortperm(scoresums, rev = true)
-
-disynaptic = [sources[p] nothexel[p]][1:10, :]
-
-trisynaptic = [["Tm1", "TmY9q⊥", "Dm3q",]]
-
-paths = vcat(
-    [[t, target] for t in monosynaptic],
-    [[t..., target] for t in eachrow(disynaptic)],
-    [[t..., target] for t in trisynaptic]
-    )
-
-rfs = inmaps.(tracebacktypes.(paths));
-
-tocolor = length.(paths) .>= 3
-tocolor[1] = true
-ellipsecolors = Vector{Any}(nothing, length(paths))
-ellipsecolors[tocolor] .= distinguishable_colors(sum(tocolor))
-
-@showprogress for id in type2ids(target)
-    ims = [rf[Name(id)] for rf in rfs]
-    montage(ims, fname = "$target/$id.pdf", labels = path2label.(paths), hexelsize = 6, ellipses = true, ellipsecolors = ellipsecolors, maxvals = true, centers = repeat([id2pq[id]], length(ims)), summary = 1)
-end
+generate_target_montages("TmY9q⊥", 4, extra_paths=[["Tm1", "TmY9q⊥", "Dm3q", "TmY9q⊥"]])
 
 # %% [markdown]
 # ## Data S5 LC10ev individual cells
@@ -1687,9 +1501,15 @@ cseries = distinguishable_colors(length(paths), ColorSchemes.hot[:], dropseed=tr
 # %%
 hexelsize = 6
 
+# Create LC10ev subdirectory if it doesn't exist
+lc10ev_dir = joinpath(TARGETDIR, "LC10ev")
+if !isdir(lc10ev_dir)
+    mkpath(lc10ev_dir)
+end
+
 @showprogress for id in LC10ev
     ims = [rf[Name(id)] for rf in rfs]
-    montage(ims, fname = "LC10ev/$id.pdf", 
+    montage(ims, fname = joinpath(lc10ev_dir, "$id.pdf"), 
     labels = path2label.(pathtexts), hexelsize = hexelsize, ellipses = true, ellipsecolors = cseries, 
     maxvals = true, centers = repeat([id2pq[id]], length(ims)), summary = 1)
 end
@@ -1728,9 +1548,15 @@ cseries = distinguishable_colors(length(paths), ColorSchemes.hot[:], dropseed=tr
 # %%
 hexelsize = 6
 
+# Create LC15 subdirectory if it doesn't exist
+lc15_dir = joinpath(TARGETDIR, "LC15")
+if !isdir(lc15_dir)
+    mkpath(lc15_dir)
+end
+
 @showprogress for id in type2ids("LC15")
     ims = [rf[Name(id)] for rf in rfs]
-    montage(ims, fname = "LC15/$id.pdf", 
+    montage(ims, fname = joinpath(lc15_dir, "$id.pdf"), 
     labels = path2label.(paths), hexelsize = hexelsize, ellipses = true, ellipsecolors = cseries, 
     maxvals = true, centers = repeat([id2pq[id]], length(ims)), summary = 1)
 end
