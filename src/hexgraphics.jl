@@ -325,7 +325,7 @@ function eyetriad(pretype::String, postids::Vector; hexelsize = 5, cmap = ColorS
 end 
 
 function celltriad(pretype::String, postids::Vector; radius = 5, hexelsize = 7, cmap = ColorSchemes.hot, ellipse = false)
-    @mfalse inputmaps = [crop(preimage(pretype, id), id2pq(id), radius, 1) for id in postids]
+    @mfalse inputmaps = [passmissing(crop)(preimage(pretype, id), id2pq(id), radius, 1) for id in postids]
     immax = maximum.(inputmaps)
     println(immax)
     
@@ -337,8 +337,8 @@ function celltriad(pretype::String, postids::Vector; radius = 5, hexelsize = 7, 
     return inputmaps
 end
 
-function typetriad(pretype::String, posttypes::Vector{String}; radius = 6, hexelsize = 7, cmap = ColorSchemes.hot, ellipse = false, normalize = :common)
-    @mfalse inputmaps = [passmissing(crop).(preimage(pretype, posttype), id2pq.(ind2id[ind2type .== posttype]), radius, 1) for posttype in posttypes]
+function typetriad(pretype::String, posttypes::Vector{String}; radius = 6, hexelsize = 7, cmap = ColorSchemes.hot, ellipse = false, normalize = :common, side = "right")
+    @mfalse inputmaps = [passmissing(crop).(preimage(pretype, posttype; side=side), id2pq.(ind2id[(ind2type .== posttype) .& (ind2side .== side)]), radius, 1) for posttype in posttypes]
     inputmaps = mean.(skipmissing.(inputmaps))
 
     immax = maximum.(inputmaps)
@@ -370,8 +370,8 @@ end
 #     return inputmaps
 # end
 
-function typetriad(prepretype::String, pretype::String, posttypes::Vector{String}; radius = 6, hexelsize = 7, cmap = ColorSchemes.hot, ellipse = false)
-    @mfalse inputmaps = [passmissing(crop).(prepreimage(prepretype, pretype, posttype), id2pq.(ind2id[ind2type .== posttype]), radius, 1) for posttype in posttypes]
+function typetriad(prepretype::String, pretype::String, posttypes::Vector{String}; radius = 6, hexelsize = 7, cmap = ColorSchemes.hot, ellipse = false, side = "right")
+    @mfalse inputmaps = [passmissing(crop).(prepreimage(prepretype, pretype, posttype), id2pq.(ind2id[(ind2type .== posttype) .& (ind2side .== side)]), radius, 1) for posttype in posttypes]
     inputmaps = mean.(skipmissing.(inputmaps))
 
     immax = maximum.(inputmaps)
