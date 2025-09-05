@@ -15,13 +15,13 @@
 # ---
 
 # %% [markdown]
-# Reads cell IDs from codex download and creates:
+# Reads visual neuron columns from codex download and creates:
 #
-# - `ind2id` - `Int64` cell IDs in canonical order corresponding to indices of weight matrix
-# - `id2ind` - dictionary for looking up `Int32` index corresponding to a cell ID.
+# - `id2pq` - dictionary mapping cell IDs to hexagonal (p,q) coordinates  
+# - `pq2column` - matrix mapping (p,q) coordinates to column IDs for right hemisphere
 #
-# These variables are written to `jldfilename`, which should be specified prior to running this script
-# If not specified, this defaults to `cellids.jld2` in the working directory.
+# This module supersedes columncoordinates.jl, columncell.jl, and cellcoordinates.jl
+#
 
 # %%
 using CSV, DataFrames
