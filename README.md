@@ -17,7 +17,7 @@ The package provides easy access to:
 - **Cell morphology and spatial coordinates**
 - **Analysis tools and visualization utilities**
 
-All data is automatically downloaded from archived sources and processed into convenient Julia data structures.
+All data is automatically downloaded from the FlyWire Codex and processed into convenient Julia data structures.
 
 ## Installation
 
@@ -44,6 +44,8 @@ enable_both_synapses(true)         # Restart Julia to take effect
 ```
 
 ## Examples
+
+**Note**: The examples below show approximate output. Numbers may vary due to updated synapse predictions and cell type annotations in newer versions.
 
 IDs of five `Tm1` cells.
 ``` julia
@@ -184,8 +186,7 @@ See `PartsListPaper/README.md` for detailed usage instructions.
 
 ## Data Sources
 
-All data is automatically downloaded via DataDeps.jl from archived sources:
-- **FlyWire Codex data** (v783 proofreading) archived on Zenodo
+All data is automatically downloaded via DataDeps.jl from the latest versions on the FlyWire Codex.
 - **Cell morphology** and spatial coordinates  
 - **Synaptic connectivity** (Princeton and Buhmann predictions)
 - **Cell type annotations** and hierarchical classifications
