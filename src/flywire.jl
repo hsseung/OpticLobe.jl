@@ -130,7 +130,15 @@ Anchor text can be specified, and defaults to the cell IDs.
 """
 function ng_hyper(idlist::Vector{Int}; anchor = join(idlist, ", "), version = 783)
     url = ng_url(idlist, version)
-    return HTML("<a href=$url>$anchor</a>")
+    
+    # Check if we're in a notebook environment that can render HTML
+    if isdefined(Main, :IJulia) && Main.IJulia.inited
+        return HTML("<a href=$url>$anchor</a>")
+    else
+        # REPL or command line - just print the URL
+        println("$anchor: $url")
+        return nothing
+    end
 end
 
 """
