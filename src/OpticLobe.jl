@@ -1,3 +1,5 @@
+# BEWARE: information is exported as global variables
+
 """
     OpticLobe is for exploring the neurons and connections of the Drosophila optic lobe.
     It is based on data files that are downloadable from the FlyWire Codex.
@@ -43,8 +45,6 @@
     W[cellid1, cellid2]             # Default version (Princeton unless changed)
     ```
 """
-# BEWARE: information is exported as global variables
-
 module OpticLobe
 
 const PKG_ROOT = pkgdir(@__MODULE__)

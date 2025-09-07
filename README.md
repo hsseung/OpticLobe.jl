@@ -43,6 +43,13 @@ set_default_synapses("Buhmann")    # Restart Julia to take effect
 enable_both_synapses(true)         # Restart Julia to take effect
 ```
 
+After enabling both versions, access them as follows:
+```julia
+W_Princeton[cellid1, cellid2]  # Princeton synapses
+W_Buhmann[cellid1, cellid2]    # Buhmann synapses
+W[cellid1, cellid2]             # Default version (Princeton unless changed)
+```
+
 ## Examples
 
 **Note**: The examples below show approximate output. Numbers may vary due to updated synapse predictions and cell type annotations in newer versions.
@@ -161,6 +168,8 @@ Pm06      │ 17143
 - `toppost(cellid, n)` - Top n postsynaptic partners of a cell  
 - `type2ids(typename; side="right")` - Get all cell IDs belonging to a cell type
 - `showall(vector)` - Display all elements of a named vector
+- `inmaps(paths)` - Convert connectivity matrix to spatial input maps (receptive fields)
+- `outmaps(paths)` - Convert connectivity matrix to spatial output maps (projective fields)
 
 ### Pathway Analysis (with Side Filtering)
 Functions for analyzing synaptic pathways with hemisphere-specific filtering. The `side` parameter restricts analysis to left or right hemisphere cells (default: "right").
@@ -178,7 +187,42 @@ Functions for analyzing synaptic pathways with hemisphere-specific filtering. Th
 
 ### Spatial Analysis
 - `pq2column(p, q)` - Convert hex coordinates to column ID
+- `crop(image, center, radius)` - Extract hexagonal region from spatial map
+- `montage(images)` - Create montage from multiple spatial maps
+- `triad(celltype)` - Generate spatial triad visualization for cell type
 - Hexagonal visualization tools in `hexgraphics` module
+
+### Cell Properties
+- `cell_length(cellid)` - Get cable length of cell
+- `cell_area(cellid)` - Get surface area of cell  
+- `cell_volume(cellid)` - Get volume of cell
+
+### Cell Classification & Mapping
+- `ind2category` - Map cell indices to category (intrinsic/boundary/other)
+- `ind2side` - Map cell indices to hemisphere (left/right)
+- `ind2superclass`, `ind2class`, `ind2subclass` - Hierarchical type classifications
+- `ind2nt`, `type2nt` - Map to neurotransmitter types
+
+### Advanced Spatial Functions
+- `eyetriad(cellid)` - Generate eye-centered triad for specific cell
+- `typetriad(celltype)` - Generate type-centered triad visualization  
+- `celltriad(cellid)` - Generate cell-centered triad visualization
+- `rect2hex`, `square2hex` - Convert rectangular to hexagonal coordinates
+- `eyehot(coords)` - Create hot-spot visualization on eye map
+- `ellipsesummary`, `drawellipse` - Ellipse fitting and visualization
+- `hexproject`, `drawpqaxes`, `hexannulus` - Hexagonal projection utilities
+- `HexagonEye` - Hexagonal eye coordinate system
+
+### Utility Functions
+- `convert2arrows(matrix)` - Convert connectivity matrix to arrow format
+- `findcenter(coordinates)` - Find center of coordinate cluster
+- `convcluster(data)` - Convex clustering analysis
+- `seven` - Utility constant/function
+- `Name` - NamedArrays indexing utility
+
+### Configuration Functions
+- `set_default_synapses(version)` - Set default synapse version (Princeton/Buhmann)
+- `enable_both_synapses(enabled)` - Enable simultaneous loading of both synapse versions
 
 ## Analysis Examples
 
