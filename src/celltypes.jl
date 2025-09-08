@@ -46,6 +46,7 @@ import Missings.levels
 # A is *not* a NamedArray. This conversion is made later, for the convenience of human user
 using SparseArrays
 
+
 # %%
 import StatsBase.countmap
 
@@ -80,14 +81,80 @@ consolidated.primary_type[consolidated.primary_type .== "TmY9q__perp"] .= "TmY9q
 #ind2type[id2ind.(visual.root_id)] .= visual.type
 
 # %%
+"""
+    ind2category::Vector{Union{Missing, String}}
+
+Maps cell indices to category classification ("intrinsic", "boundary", or `missing`).
+
+Categories classify visual system neurons based on their anatomical location:
+- "intrinsic": Neurons with processes confined to the optic lobe
+- "boundary": Visual projection neurons (VPN) and visual centrifugal neurons (VCN)
+- `missing`: Non-visual neurons (central brain, etc.) that lack category annotation
+
+# Examples
+```julia
+ind2category[1]                    # Category of first cell
+ind2category[id2ind[720575940599333574]]  # Category of specific cell
+findall(ind2category .== "intrinsic")    # All intrinsic cell indices
+```
+
+# Notes
+- Only visual system neurons have category annotations
+- Based on FlyWire Codex visual neuron classifications
+- Used to define `intrinsictypes` and `boundarytypes` vectors
+"""
 ind2category = Vector{Union{Missing, String}}(missing, length(ind2id))
 ind2category[id2ind.(visual.root_id)] .= visual.category
 
 # %%
+"""
+    ind2side::Vector{Union{Missing, String}}
+
+Maps cell indices to hemisphere side ("left", "right", or `missing`).
+
+Side classification for visual system neurons based on their spatial location:
+- "left": Neurons primarily in the left optic lobe
+- "right": Neurons primarily in the right optic lobe  
+- `missing`: Non-visual neurons or cells without clear laterality
+
+# Examples
+```julia
+ind2side[1]                     # Side of first cell
+ind2side[id2ind[720575940599333574]]  # Side of specific cell
+findall(ind2side .== "right")   # All right hemisphere cell indices
+```
+
+# Notes
+- Only visual system neurons have side annotations
+- Side filtering uses this information to restrict analyses to single hemispheres
+- Essential for `tracetypes`, `tracebacktypes`, and spatial analysis functions
+"""
 ind2side = Vector{Union{Missing, String}}(missing, length(ind2id))
 ind2side[id2ind.(visual.root_id)] .= visual.side
 
 # %%
+"""
+    ind2type::Vector{Union{Missing, String}}
+
+Maps cell indices to primary cell type names (e.g., "Tm1", "Dm3v", or `missing`).
+
+The primary cell type classification for all neurons in the dataset:
+- Visual types: "Tm1", "Dm3v", "LC10", etc. (740 types total)
+- Central brain types: Thousands of additional types
+- `missing`: Unclassified or untyped cells
+
+# Examples
+```julia
+ind2type[1]                     # Type of first cell
+ind2type[id2ind[720575940599333574]]  # Type of specific cell
+findall(ind2type .== "Tm1")     # All Tm1 cell indices
+```
+
+# Notes
+- Based on FlyWire Codex consolidated cell type annotations
+- Foundation for all type-based analyses and connectivity computations
+- Used to construct assignment matrix `A` and type vectors (`alltypes`, etc.)
+"""
 ind2type = Vector{Union{Missing, String}}(missing, length(ind2id))
 ind2type[id2ind.(consolidated.root_id)] .= consolidated.primary_type
 
@@ -144,6 +211,30 @@ visualtypes = vcat(intrinsictypes, boundarytypes)
 alltypes = vcat(visualtypes, othertypes)
 
 println("computing assignment matrix: all")
+"""
+    A::SparseMatrixCSC{Bool, Int32}
+
+The assignment matrix `A[c, t]` assigns cell `c` to type `t`.
+
+# Indexing
+- `c` can be either a cell index (1, 2, 3, ...) or cell ID (FlyWire root ID)
+- `t` is one of the strings in `alltypes`, or the corresponding type index
+
+# Returns
+- `true` if cell `c` is assigned to type `t`, `false` otherwise
+
+# Examples
+```julia
+A[1, 1]                    # Check if first cell belongs to first type
+A[Name(720575940599333574), Name("Tm1")]  # Check if specific cell is Tm1
+A[:, Name("Tm1")]          # All cells of type Tm1 (boolean vector)
+```
+
+# Notes
+- Sparse matrix for memory efficiency (~130K cells × ~8K types)
+- Use `NamedArrays.Name()` for string-based indexing
+- Dimensions: `length(ind2id) × length(alltypes)`
+"""
 A = zeros(Bool, length(ind2type), length(alltypes))
 @mfalse for (i, celltype) in enumerate(alltypes)
     A[ind2type .== celltype, i]  .= 1
@@ -156,3 +247,44 @@ A = SparseMatrixCSC{Bool, Int32}(A);
 # println("computing assignment matrix: left, right")
 # @mfalse A_right = sparse(ind2side .!= "left") .* A;
 # @mfalse A_left = sparse(ind2side .!= "right") .* A;
+
+
+"""
+    type2ids(celltype::String; side::String="right") -> Vector{Int64}
+
+Get cell IDs for all cells of a specified type, with optional side filtering for visual types.
+
+For visual cell types (those in `visualtypes`), applies side filtering to return only cells
+from the specified hemisphere. For non-visual cell types (central brain, etc.), returns all
+cells regardless of side since ind2side doesn't yet contain information about non-visual types.
+
+# Arguments
+- `celltype::String`: Name of the cell type
+- `side::String`: Side filter for visual types ("left", "right"). Default "right".
+  Ignored for non-visual cell types.
+
+# Returns
+- `Vector{Int64}`: Cell IDs of the specified type and side (for visual types)
+
+# Examples
+```julia
+# Visual cell type - applies side filtering
+tm1_right = type2ids("Tm1")                    # right side (default)
+tm1_left = type2ids("Tm1", side="left")        # left side
+
+# Non-visual cell type - ignores side parameter
+central_cells = type2ids("SomeCentralType")     # returns all cells
+```
+
+# Notes
+- Uses global variables `visualtypes`, `ind2id`, `ind2type`, `ind2side`
+- Visual vs non-visual determination based on membership in `visualtypes`
+- TODO: Extend side filtering to work for non-visual types that have side information
+"""
+function type2ids(celltype::String; side::String="right")
+    if celltype in visualtypes
+        @mfalse ind2id[(ind2type .== celltype) .& (ind2side .== side)]
+    else
+        @mfalse ind2id[ind2type .== celltype]
+    end
+end

@@ -103,6 +103,29 @@ if @load_preference("load_both_synapses", false)
     global W_Princeton = NamedArray(W_Princeton, names = (ind2id, ind2id), dimnames = ("cellid", "cellid"))
 end
 A = NamedArray(A, names = (ind2id, alltypes), dimnames = ("cellid", "celltype"))
+
+"""
+    Ai::NamedArray{Bool, 2}
+
+Intrinsic cell assignment matrix - subset of `A` containing only intrinsic cell types.
+
+Boolean matrix where `Ai[cellid, intrinsic_type]` is `true` if the cell belongs to that intrinsic type.
+This is a filtered version of the full assignment matrix `A` containing only the 230 intrinsic types.
+
+# Examples
+```julia
+Ai[Name(720575940599333574), Name("Tm1")]  # Check if specific cell is Tm1
+Ai[:, Name("Tm1")]                         # All Tm1 cells (boolean vector)
+findall(Ai[:, Name("Tm1")])                # Indices of all Tm1 cells
+```
+
+# Notes
+- Subset of `A` restricted to `intrinsictypes`: `A[:, intrinsictypes]`
+- Row indices: cell IDs from `ind2id`
+- Column indices: intrinsic type names from `intrinsictypes` 
+- Dimensions: ~130K cells × 230 intrinsic types
+- Used for analyses focused on optic lobe intrinsic neurons
+"""
 Ai = A[:, intrinsictypes]
 export Ai
 export Name

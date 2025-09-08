@@ -3,17 +3,56 @@
 using DataStructures, JSON, URIs, MissingsAsFalse
 
 """
-    codex_open(idlist[, version])
+    codex_open(idlist::Vector{Int}, version=783)
 
-search the FlyWire Codex for the cells in `idlist`
+Open FlyWire Codex in a new browser window to search and view specified cells.
 
-if `version` is unspecified, use v783.
+Launches the FlyWire Codex web interface with a pre-filled search query for the provided 
+cell IDs, allowing you to explore detailed cell information, morphology, and connectivity data.
+
+# Arguments
+- `idlist::Vector{Int}`: Vector of FlyWire root IDs to search for in Codex
+- `version::Int`: FlyWire data version (default: 783 for v783 proofreading)
+
+# Examples
+```julia
+codex_open([720575940599333574])                    # Open single cell in Codex
+codex_open(type2ids("Tm1")[1:5])                    # Open first 5 Tm1 cells
+codex_open([720575940599333574], 630)               # Use v630 data instead
+```
+
+# Notes
+- Opens a new browser tab/window with the Codex interface
+- Works in both Jupyter notebooks (JavaScript) and REPL/command line (system browser)
+- Codex provides detailed cell information including morphology, connectivity, and annotations
+- Default uses v783 proofreading data
 """
 function codex_open(idlist::Vector{Int}, version = 783)
     query = join(idlist, "+")
     url = "https://codex.flywire.ai/app/search?filter_string=$query&sort_by=&page_size=10&data_version=$version"
-    urlquoted = "\"" * url * "\""
-    display("text/javascript", """window.open($urlquoted)""")
+    
+    # Check if we're in a notebook environment that can render JavaScript
+    if isdefined(Main, :IJulia) && Main.IJulia.inited
+        urlquoted = "\"" * url * "\""
+        display("text/javascript", """window.open($urlquoted)""")
+    else
+        # REPL or command line - open in system browser
+        try
+            if Sys.isapple()
+                run(`open $url`)
+            elseif Sys.islinux()
+                run(`xdg-open $url`)
+            elseif Sys.iswindows()
+                run(`start $url`)
+            else
+                println("Cannot open browser automatically. Please open this URL manually:")
+                println(url)
+            end
+        catch
+            println("Cannot open browser automatically. Please open this URL manually:")
+            println(url)
+        end
+    end
 end
 
 
@@ -102,20 +141,62 @@ end
 ######### open neuroglancer window
 
 """
-    ng_open(idlist[, version])
+    ng_open(idlist::Vector{Int}, version=783)
+    ng_open(celltype::String, version=783)
 
-open neuroglancer window showing cells in `idlist`
+Open Neuroglancer 3D viewer in a new browser window to visualize specified cells.
+
+Launches the Neuroglancer web interface with a pre-configured 3D view showing the 
+specified cells overlaid on the FlyWire brain volume. Useful for exploring cell 
+morphology, spatial relationships, and anatomical context.
+
+# Arguments
+- `idlist::Vector{Int}`: Vector of FlyWire root IDs to visualize
+- `celltype::String`: Cell type name (shows all cells of that type)
+- `version::Int`: FlyWire data version (default: 783 for v783 proofreading)
+
+# Examples
+```julia
+ng_open([720575940599333574])                     # Open single cell in 3D
+ng_open(type2ids("Tm1")[1:10])                    # Open first 10 Tm1 cells
+ng_open("Dm3v")                                   # Open all Dm3v cells
+ng_open([720575940599333574], 630)                # Use v630 data instead
+```
+
+# Notes
+- Opens a new browser tab/window with Neuroglancer interface
+- Works in both Jupyter notebooks (JavaScript) and REPL/command line (system browser)
+- Shows cells in 3D context with brain mesh and EM data
+- Default uses v783 proofreading data with appropriate segmentation layer
+- Useful for morphological analysis and spatial relationship exploration
 """
 function ng_open(idlist::Vector{Int}, version = 783)
-    url = "\"" * ng_url(idlist, version) * "\""
-    display("text/javascript", """window.open($url)""")
+    url = ng_url(idlist, version)
+    
+    # Check if we're in a notebook environment that can render JavaScript
+    if isdefined(Main, :IJulia) && Main.IJulia.inited
+        urlquoted = "\"" * url * "\""
+        display("text/javascript", """window.open($urlquoted)""")
+    else
+        # REPL or command line - open in system browser
+        try
+            if Sys.isapple()
+                run(`open $url`)
+            elseif Sys.islinux()
+                run(`xdg-open $url`)
+            elseif Sys.iswindows()
+                run(`start $url`)
+            else
+                println("Cannot open browser automatically. Please open this URL manually:")
+                println(url)
+            end
+        catch
+            println("Cannot open browser automatically. Please open this URL manually:")
+            println(url)
+        end
+    end
 end
 
-"""
-    ng_open(celltype[, version])
-
-open neuroglancer window showing all cells in `celltype`
-"""
 function ng_open(celltype::String, version = 783)
     @mfalse ng_open(ind2id[ind2type .== celltype], version)
 end
@@ -123,10 +204,40 @@ end
 ######### create hyperlink
 
 """
-    ng_hyper(idlist[; version = 783, anchor = join(idlist, ", ")])
+    ng_hyper(idlist::Vector{Int}; anchor=join(idlist, ", "), version=783)
+    ng_hyper(celltype::String; version=783)
 
-create a hyperlink to a neuroglancer view of cells in `idlist`
-Anchor text can be specified, and defaults to the cell IDs.
+Create a clickable hyperlink or URL to view specified cells in Neuroglancer.
+
+Generates either a clickable HTML hyperlink (in Jupyter notebooks) or prints a URL 
+(in REPL) that opens Neuroglancer with the specified cells pre-loaded for 3D visualization.
+
+# Arguments
+- `idlist::Vector{Int}`: Vector of FlyWire root IDs to visualize
+- `celltype::String`: Cell type name (shows all cells of that type)
+- `anchor::String`: Text to display for the hyperlink (default: comma-separated cell IDs)
+- `version::Int`: FlyWire data version (default: 783 for v783 proofreading)
+
+# Returns
+- In Jupyter: HTML hyperlink object that can be displayed
+- In REPL: Prints URL and returns `nothing`
+
+# Examples
+```julia
+# In Jupyter notebooks:
+ng_hyper([720575940599333574])                    # Clickable link with cell ID as text
+ng_hyper(type2ids("Tm1")[1:5], anchor="5 Tm1 cells")  # Custom link text
+ng_hyper("Dm3v")                                  # Link to all Dm3v cells
+
+# In REPL:
+ng_hyper([720575940599333574])                    # Prints: "720575940599333574: https://..."
+```
+
+# Notes
+- Environment detection: shows HTML links in Jupyter, prints URLs in REPL
+- Hyperlinks are clickable in Jupyter notebooks for convenient navigation
+- URL format compatible with Neuroglancer's state encoding system
+- Default uses v783 proofreading data
 """
 function ng_hyper(idlist::Vector{Int}; anchor = join(idlist, ", "), version = 783)
     url = ng_url(idlist, version)
@@ -141,12 +252,6 @@ function ng_hyper(idlist::Vector{Int}; anchor = join(idlist, ", "), version = 78
     end
 end
 
-"""
-    ng_hyper(celltype[; version = 783])
-
-create a hyperlink to a neuroglancer view of cells in `celltype`
-The anchor text is just the `celltype` string.
-"""
 function ng_hyper(celltype::String; version = 783)
     @mfalse idlist = ind2id[ind2type .== celltype]
     return ng_hyper(idlist, anchor = celltype, version = version)

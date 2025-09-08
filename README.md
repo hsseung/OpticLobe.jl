@@ -50,6 +50,19 @@ W_Buhmann[cellid1, cellid2]    # Buhmann synapses
 W[cellid1, cellid2]             # Default version (Princeton unless changed)
 ```
 
+### Checking Current Configuration
+You can check which synapse version is currently active:
+```julia
+# Using internal variables (quick check)
+OpticLobe.default_synapses  # "Princeton" or "Buhmann"
+OpticLobe.load_both         # true if both versions loaded, false otherwise
+
+# Using Preferences.jl (standard approach)
+using Preferences
+load_preference(OpticLobe, "default_synapses")    # "Princeton" or "Buhmann" 
+load_preference(OpticLobe, "load_both_synapses")  # true or false
+```
+
 ## Examples
 
 **Note**: The examples below show approximate output. Numbers may vary due to updated synapse predictions and cell type annotations in newer versions.
@@ -134,11 +147,19 @@ Pm06      │ 17143
 ## Data Structures
 
 ### Cell Identification
+OpticLobe uses two different cell identifiers:
+
+- **Cell ID**: FlyWire root IDs (64-bit integers like `720575940599333574`) that uniquely identify cells in the FlyWire dataset
+- **Cell Index**: Sequential integers (1, 2, 3, ...) used internally for array indexing and matrix operations
+
+Conversion functions:
 - `ind2id`, `id2ind` - Convert between cell indices and FlyWire root IDs
 - `ind2type` - Map cell indices to cell type names  
-- `id2pq` - Spatial coordinates (hexagonal p,q system)
+- `id2pq` - Map cell IDs to spatial coordinates (hexagonal p,q system)
 
 ### Cell Type Classifications  
+These are vectors of strings containing cell type names:
+
 - `intrinsictypes` (230) - Neurons intrinsic to the optic lobe
 - `boundarytypes` (510) - Visual projection and centrifugal neurons
 - `othertypes` (7805) - All other cell types (central brain, etc.)
@@ -146,24 +167,42 @@ Pm06      │ 17143
 - `alltypes` - All cell types in the dataset
 
 ### Connectivity Matrices
-- `W` - Cell-to-cell synaptic weight matrix (sparse, ~130K × 130K cells)
-- `Wtt` - Type-to-type connectivity (aggregated synapses)
-- `Wct` - Cell-to-type connectivity 
-- `Wtc` - Type-to-cell connectivity
-- `infraction`, `outfraction` - Normalized connectivity fractions
-- `inmean`, `outmean` - Mean synapses per cell by type
+
+All connectivity matrices are `NamedArray` objects that can be indexed by either position or name using `Name()`. For example, `W[Name(720575940599333574), Name(720575940620875399)]` or `Wtt["Tm1", "Dm3v"]`. The core connectivity data is stored as synapse counts (`Int32` values) representing the number of synaptic connections between neurons.
+
+**Cell-to-cell connectivity:**
+- `W` - Full synaptic weight matrix (sparse, ~130K × 130K cells) where `W[i, j]` is the number of synapses from neuron `i` to neuron `j`. Use this for analyzing connections between specific individual cells.
+
+**Mixed cell/type connectivity:**
+These matrices aggregate connectivity between individual cells and cell types, useful for analyzing how specific cells connect to functional groups or how types connect to individual cells:
+- `Wct` - Cell-to-type connectivity (cells × types): `Wct[cellid, typename]` gives total synapses from that cell to all cells of that type
+- `Wtc` - Type-to-cell connectivity (types × cells): `Wtc[typename, cellid]` gives total synapses from all cells of that type to the target cell
+
+**Type-to-type connectivity:**
+Matrices that summarize connections between cell types:
+- `Wtt` - Type-to-type connectivity: `Wtt[pretype, posttype]` gives total synapses from all cells of the presynaptic type to all cells of the postsynaptic type
+- `infraction`, `outfraction` - Normalized connectivity fractions (0-1 scale): `infraction[pretype, posttype]` shows what fraction of the postsynaptic type's inputs come from the presynaptic type; `outfraction[pretype, posttype]` shows what fraction of the presynaptic type's outputs go to the postsynaptic type
+- `inmean`, `outmean` - Mean synapses per cell by type: `inmean[posttype]` gives the average number of input synapses per cell of that type; `outmean[pretype]` gives the average number of output synapses per cell of that type
 
 ### Cell Type Assignment
-- `A` - Boolean matrix: cells × all types  
-- `Ai` - Boolean matrix: cells × intrinsic types only
+
+Boolean matrices that encode which cells belong to which types. These sparse matrices enable efficient filtering and selection of cells by type membership:
+
+- `A` - Boolean assignment matrix (cells × all types) where `A[cell, type]` is `true` if the cell belongs to that type
+- `Ai` - Subset of `A` containing only intrinsic types (cells × intrinsic types), useful for optic lobe-focused analyses
 
 ### Type Hierarchies
-- `class2families` - Visual classes to type families mapping
-- `family2types` - Type families to individual types mapping
+
+The visual system types are organized in a three-level hierarchy: **classes** → **families** → **individual types**. This hierarchical organization reflects functional and anatomical relationships:
+
+- `class2families` - Maps 5 visual classes ("receptor", "columnar", "interneuron", etc.) to their constituent type families
+- `family2types` - Maps type families ("Tm", "Dm", "R7-8", etc.) to individual cell types within each family
 
 ## Useful Functions
 
 ### Analysis Functions
+
+Basic functions for exploring connectivity patterns and cell properties:
 - `toppre(celltype, n)` - Top n presynaptic partners of a cell type
 - `toppost(cellid, n)` - Top n postsynaptic partners of a cell  
 - `type2ids(typename; side="right")` - Get all cell IDs belonging to a cell type
@@ -172,7 +211,8 @@ Pm06      │ 17143
 - `outmaps(paths)` - Convert connectivity matrix to spatial output maps (projective fields)
 
 ### Pathway Analysis (with Side Filtering)
-Functions for analyzing synaptic pathways with hemisphere-specific filtering. The `side` parameter restricts analysis to left or right hemisphere cells (default: "right").
+
+Functions for analyzing multi-step synaptic pathways with hemisphere-specific filtering. All functions support a `side` parameter (default: "right") to restrict analysis to cells in a specific hemisphere, which is essential for studying lateralized visual processing:
 
 - `tracetypes(celltypes; side="right")` - Multi-step connectivity through cell type sequence
 - `tracebacktypes(celltypes; side="right")` - Like tracetypes but with normalized connectivity
@@ -180,40 +220,61 @@ Functions for analyzing synaptic pathways with hemisphere-specific filtering. Th
 - `prepreimage(prepretype, pretype, posttype; side="right")` - Two-step presynaptic maps
 
 ### Visualization & Integration
-- `codex_open(cellid)` - Open cell in FlyWire Codex browser
-- `ng_open(cellids)` - Open cells in Neuroglancer 3D viewer
-- `ng_hyper(cellids)` - Create Neuroglancer hyperlink
-- `strings2ticks(strings)` - Convert strings to plot tick marks
+
+Functions for viewing cells in external tools and preparing data for plotting. The FlyWire integration functions automatically detect your environment (Jupyter vs REPL) and adapt their behavior accordingly:
+
+- `codex_open(cellids; version=783)` - Open cells in FlyWire Codex browser (works in both Jupyter and REPL)
+- `ng_open(cellids; version=783)` - Open cells in Neuroglancer 3D viewer (works in both Jupyter and REPL)
+- `ng_hyper(cellids; anchor, version=783)` - Create clickable Neuroglancer hyperlinks (Jupyter) or print URLs (REPL)
+- `strings2ticks(strings)` - Convert string vector to (positions, labels) for plot tick marks
 
 ### Spatial Analysis
-- `pq2column(p, q)` - Convert hex coordinates to column ID
-- `crop(image, center, radius)` - Extract hexagonal region from spatial map
-- `montage(images)` - Create montage from multiple spatial maps
+
+Tools for working with the hexagonal column coordinate system of the optic lobe and creating spatial visualizations. The optic lobe uses a hexagonal lattice where each column has (p,q) coordinates:
+
+- `id2pq[cellid]` - Map cell IDs to hexagonal (p,q) column coordinates 
+- `pq2column[p, q]` - Map hex coordinates to column IDs (right hemisphere only)
+- `crop(image, center, radius; sat)` - Extract square region from image centered at coordinates
+- `square2hex(square)` - Convert square array to hexagonal shape by masking corners
+- `rect2hex(rect; hexelsize, pointannotation)` - Display rectangular array on hexagonal lattice
+- `montage(images; hexelsize, labels, ellipses, ...)` - Create grid layout of hexagonal eye maps
 - `triad(celltype)` - Generate spatial triad visualization for cell type
 - Hexagonal visualization tools in `hexgraphics` module
 
 ### Cell Properties
-- `cell_length(cellid)` - Get cable length of cell
-- `cell_area(cellid)` - Get surface area of cell  
-- `cell_volume(cellid)` - Get volume of cell
+
+Morphological measurements for individual cells. These are NamedArrays indexed directly by FlyWire cell IDs, with measurements converted from nanometers to micrometers for convenience:
+
+- `cell_length[cellid]` - Cable length of cell in micrometers
+- `cell_area[cellid]` - Surface area of cell in square micrometers  
+- `cell_volume[cellid]` - Volume of cell in cubic micrometers
 
 ### Cell Classification & Mapping
-- `ind2category` - Map cell indices to category (intrinsic/boundary/other)
-- `ind2side` - Map cell indices to hemisphere (left/right)
-- `ind2superclass`, `ind2class`, `ind2subclass` - Hierarchical type classifications
-- `ind2nt`, `type2nt` - Map to neurotransmitter types
+
+Functions for mapping between cell indices (not cell IDs) and various classification schemes. These are vectors indexed by sequential cell indices, often returning `missing` for cells without annotations:
+
+- `ind2type[cellindex]` - Map cell indices to primary type names (vector of strings)
+- `ind2category[cellindex]` - Map cell indices to category (intrinsic/boundary/missing)
+- `ind2side[cellindex]` - Map cell indices to hemisphere (left/right/missing) 
+- `ind2superclass[cellindex]`, `ind2class[cellindex]`, `ind2subclass[cellindex]` - Hierarchical classifications
+- `ind2nt[cellindex]`, `type2nt(typename)` - Map to neurotransmitter types
 
 ### Advanced Spatial Functions
+
+Specialized functions for creating complex spatial visualizations and analyzing spatial patterns in the hexagonal coordinate system:
+
 - `eyetriad(cellid)` - Generate eye-centered triad for specific cell
 - `typetriad(celltype)` - Generate type-centered triad visualization  
 - `celltriad(cellid)` - Generate cell-centered triad visualization
-- `rect2hex`, `square2hex` - Convert rectangular to hexagonal coordinates
-- `eyehot(coords)` - Create hot-spot visualization on eye map
-- `ellipsesummary`, `drawellipse` - Ellipse fitting and visualization
+- `eyehot(image; sat)` - Convert array to heatmap using hot colormap with eye masking
+- `ellipsesummary(image)`, `drawellipse(ellipse)` - Ellipse fitting and visualization
 - `hexproject`, `drawpqaxes`, `hexannulus` - Hexagonal projection utilities
-- `HexagonEye` - Hexagonal eye coordinate system
+- `HexagonEye(p, q, hexelsize)` - Create hexagon at eye coordinates
 
 ### Utility Functions
+
+Miscellaneous helper functions for data processing and analysis:
+
 - `convert2arrows(matrix)` - Convert connectivity matrix to arrow format
 - `findcenter(coordinates)` - Find center of coordinate cluster
 - `convcluster(data)` - Convex clustering analysis

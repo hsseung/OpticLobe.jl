@@ -43,13 +43,79 @@ classification = sort(CSV.read(datadep"Codex classification/classification.csv.g
 @assert classification.root_id == ind2id
 
 # %%
+"""
+    ind2superclass::Vector{Union{Missing, String}}
+
+Maps cell indices to superclass hierarchical classification.
+
+Highest level of the three-tier hierarchical classification system:
+- Examples: "visual", "sensory", "motor", "central"  
+- Provides broad functional/anatomical groupings
+- `missing`: Cells without hierarchical classification
+
+# Examples
+```julia
+ind2superclass[1]                     # Superclass of first cell
+ind2superclass[id2ind[720575940599333574]]  # Superclass of specific cell
+findall(ind2superclass .== "visual") # All visual superclass cell indices
+```
+
+# Notes
+- Part of hierarchical classification: superclass → class → subclass
+- Based on FlyWire Codex hierarchical annotations
+- Used for high-level functional analysis and cell grouping
+"""
 ind2superclass = Vector{Union{Missing, String}}(missing, length(ind2id))
 ind2superclass[id2ind.(classification.root_id)] .= classification.super_class
 
 # %%
+"""
+    ind2class::Vector{Union{Missing, String}}
+
+Maps cell indices to class hierarchical classification.
+
+Mid-level of the three-tier hierarchical classification system:
+- Examples: "optic lobe", "central complex", "mushroom body"
+- More specific than superclass, broader than subclass
+- `missing`: Cells without hierarchical classification
+
+# Examples
+```julia
+ind2class[1]                        # Class of first cell
+ind2class[id2ind[720575940599333574]]  # Class of specific cell
+findall(ind2class .== "optic lobe") # All optic lobe class cell indices
+```
+
+# Notes
+- Part of hierarchical classification: superclass → class → subclass
+- Based on FlyWire Codex hierarchical annotations
+- Provides intermediate-level functional/anatomical groupings
+"""
 ind2class = Vector{Union{Missing, String}}(missing, length(ind2id))
 ind2class[id2ind.(classification.root_id)] .= classification.class
 
 # %%
+"""
+    ind2subclass::Vector{Union{Missing, String}}
+
+Maps cell indices to subclass hierarchical classification.
+
+Most specific level of the three-tier hierarchical classification system:
+- Examples: "medulla intrinsic", "lamina monopolar", "projection neurons"
+- Most detailed functional/anatomical categorization
+- `missing`: Cells without hierarchical classification
+
+# Examples
+```julia
+ind2subclass[1]                           # Subclass of first cell
+ind2subclass[id2ind[720575940599333574]]  # Subclass of specific cell
+findall(ind2subclass .== "medulla intrinsic")  # All medulla intrinsic cell indices
+```
+
+# Notes
+- Part of hierarchical classification: superclass → class → subclass
+- Based on FlyWire Codex hierarchical annotations
+- Provides finest-grained functional/anatomical categories
+"""
 ind2subclass = Vector{Union{Missing, String}}(missing, length(ind2id))
 ind2subclass[id2ind.(classification.root_id)] .= classification.sub_class

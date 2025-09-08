@@ -42,10 +42,50 @@ end
 # %%
 neurons = CSV.read(datadep"Codex neuron IDs/neurons.csv.gz", DataFrame)
 
+"""
+    ind2id::Vector{Int64}
+
+Vector of FlyWire root IDs in canonical order corresponding to matrix indices.
+
+Maps cell indices (1, 2, 3, ...) to FlyWire root IDs (64-bit integers like 720575940599333574).
+This vector defines the canonical ordering used throughout OpticLobe for matrix operations.
+
+# Examples
+```julia
+ind2id[1]           # Get FlyWire root ID for first cell
+ind2id[1:5]         # Get first 5 cell IDs
+length(ind2id)      # Total number of cells (~130K)
+```
+
+# Notes
+- Length corresponds to total number of proofread cells in FlyWire v783
+- Used as row/column names for connectivity matrices when converted to NamedArrays
+- Canonical ordering ensures consistency across all OpticLobe data structures
+"""
 ind2id = neurons.root_id
 
 # %%
 # ### dictionary for reverse lookup
+"""
+    id2ind::Dict{Int64, Int32}
+
+Dictionary for reverse lookup: maps FlyWire root IDs to cell indices.
+
+Converts FlyWire root IDs (64-bit integers) back to sequential indices (1, 2, 3, ...) 
+used for array operations and matrix indexing.
+
+# Examples  
+```julia
+id2ind[720575940599333574]     # Get index for specific cell ID
+id2ind.(some_cell_ids)         # Broadcast to convert vector of IDs to indices
+id2ind(missing_id)             # Returns missing for unknown IDs (see function method)
+```
+
+# Notes
+- Returns `Int32` indices for memory efficiency
+- Function method `id2ind(key)` returns `missing` for unknown keys (safer than direct dict access)
+- Inverse of `ind2id`: `id2ind[ind2id[i]] == i` for valid indices
+"""
 id2ind = Dict(ind2id .=> Int32.(1:length(ind2id)))
 
 # %%

@@ -4,10 +4,63 @@ using PrettyTables
 
 using StatsBase
 
+"""
+    showall(x)
+
+Display the complete contents of a data structure using plain text formatting.
+
+Convenient function for showing all elements of vectors, matrices, or other data structures
+without truncation. Particularly useful for named arrays and large data structures that 
+would normally be abbreviated in the REPL.
+
+# Examples
+```julia
+showall(type2ids("Tm1"))          # Show all Tm1 cell IDs
+showall(Wtt["Tm1", :])            # Show all Tm1 outputs (full vector)
+showall(intrinsictypes)           # Show all intrinsic type names
+```
+
+# Notes
+- Equivalent to `show(stdout, "text/plain", x)`
+- Bypasses REPL display limits for large arrays
+- Useful for inspecting complete contents of connectivity vectors
+"""
 showall = x->show(stdout, "text/plain", x)
 
 # BEWARE first version returns fraction of synapses, second version returns number of synapses
 
+"""
+    toppost(celltype::String; sort=:out, nresults=15)
+
+Display top postsynaptic partners of a cell type with connectivity fractions.
+
+Shows the strongest postsynaptic connections from a given cell type, displaying both 
+output fractions (what fraction of the presynaptic type's outputs go to each target) 
+and input fractions (what fraction of each target's inputs come from the presynaptic type).
+
+# Arguments
+- `celltype::String`: Name of the presynaptic cell type
+- `sort::Symbol`: Sort by `:out` (output fraction) or `:in` (input fraction). Default `:out`.
+- `nresults::Int`: Number of top connections to display. Default 15.
+
+# Examples
+```julia
+toppost("Tm1")                    # Top 15 Tm1 postsynaptic partners (sorted by output fraction)
+toppost("Tm1", sort=:in)          # Sorted by input fraction instead
+toppost("Dm3v", nresults=10)      # Show only top 10 connections
+```
+
+# Output
+Pretty-printed table with:
+- Row headers: postsynaptic cell type names
+- "out" column: percentage of presynaptic type's outputs going to each target
+- "in" column: percentage of each target's inputs coming from presynaptic type
+
+# Notes
+- Uses `outfraction` and `infraction` matrices
+- Output adapts to IJulia (HTML) vs REPL (text) environments
+- Percentages are displayed as integers (0-100)
+"""
 function toppost(celltype::String; sort=:out, nresults = 15)
     backend = isdefined(Main, :IJulia) && Main.IJulia.inited ? Val(:html) : Val(:text)
     if sort == :in
@@ -23,6 +76,38 @@ function toppost(celltype::String; sort=:out, nresults = 15)
     )
 end
 
+"""
+    toppre(celltype::String; sort=:in, nresults=15)
+
+Display top presynaptic partners of a cell type with connectivity fractions.
+
+Shows the strongest presynaptic connections to a given cell type, displaying both 
+input fractions (what fraction of the postsynaptic type's inputs come from each source) 
+and output fractions (what fraction of each source's outputs go to the postsynaptic type).
+
+# Arguments
+- `celltype::String`: Name of the postsynaptic cell type
+- `sort::Symbol`: Sort by `:in` (input fraction) or `:out` (output fraction). Default `:in`.
+- `nresults::Int`: Number of top connections to display. Default 15.
+
+# Examples
+```julia
+toppre("Dm3v")                    # Top 15 Dm3v presynaptic partners (sorted by input fraction)
+toppre("Dm3v", sort=:out)         # Sorted by output fraction instead
+toppre("T2a", nresults=10)        # Show only top 10 connections
+```
+
+# Output
+Pretty-printed table with:
+- Row headers: presynaptic cell type names
+- "in" column: percentage of postsynaptic type's inputs coming from each source
+- "out" column: percentage of each source's outputs going to postsynaptic type
+
+# Notes
+- Uses `infraction` and `outfraction` matrices
+- Output adapts to IJulia (HTML) vs REPL (text) environments
+- Percentages are displayed as integers (0-100)
+"""
 function toppre(celltype::String; sort=:in, nresults = 15)
     backend = isdefined(Main, :IJulia) && Main.IJulia.inited ? Val(:html) : Val(:text)
     if sort == :out
@@ -84,48 +169,38 @@ function toppre(ids::Vector{Int64}; nresults = 15, normalize=false)
     end
 end
 
-function strings2ticks(sarray::Vector{String})
-    return (1:length(sarray), sarray)
-end
-
 """
-    type2ids(celltype::String; side::String="right") -> Vector{Int64}
+    strings2ticks(sarray::Vector{String}) -> Tuple{UnitRange{Int}, Vector{String}}
 
-Get cell IDs for all cells of a specified type, with optional side filtering for visual types.
+Convert a vector of strings to tick positions and labels for plotting.
 
-For visual cell types (those in `visualtypes`), applies side filtering to return only cells 
-from the specified hemisphere. For non-visual cell types (central brain, etc.), returns all 
-cells regardless of side since ind2side doesn't yet contain information about non-visual types.
+Returns a tuple of (positions, labels) suitable for use with plotting packages
+like Plots.jl for setting custom tick marks on axes.
 
 # Arguments
-- `celltype::String`: Name of the cell type
-- `side::String`: Side filter for visual types ("left", "right"). Default "right". 
-  Ignored for non-visual cell types.
+- `sarray::Vector{String}`: Vector of strings to use as tick labels
 
 # Returns
-- `Vector{Int64}`: Cell IDs of the specified type and side (for visual types)
+- `Tuple`: (1:length(sarray), sarray) - positions and corresponding labels
 
 # Examples
 ```julia
-# Visual cell type - applies side filtering
-tm1_right = type2ids("Tm1")                    # right side (default)
-tm1_left = type2ids("Tm1", side="left")        # left side
+ticks = strings2ticks(["Tm1", "Tm2", "Tm3"])     # ([1, 2, 3], ["Tm1", "Tm2", "Tm3"])
+ticks = strings2ticks(intrinsictypes[1:10])      # First 10 intrinsic types as ticks
 
-# Non-visual cell type - ignores side parameter  
-central_cells = type2ids("SomeCentralType")     # returns all cells
+# Usage in plotting:
+using Plots
+xticks = strings2ticks(["Type1", "Type2", "Type3"])
+plot(data, xticks=xticks)
 ```
 
 # Notes
-- Uses global variables `visualtypes`, `ind2id`, `ind2type`, `ind2side`
-- Visual vs non-visual determination based on membership in `visualtypes`
-- TODO: Extend side filtering to work for non-visual types that have side information
+- Positions start at 1 and increment by 1
+- Commonly used for categorical axis labels in connectivity plots
+- Output format matches plotting package expectations for custom ticks
 """
-function type2ids(celltype::String; side::String="right")
-    if celltype in visualtypes
-        @mfalse ind2id[(ind2type .== celltype) .& (ind2side .== side)]
-    else
-        @mfalse ind2id[ind2type .== celltype]
-    end
+function strings2ticks(sarray::Vector{String})
+    return (1:length(sarray), sarray)
 end
 
 """

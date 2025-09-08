@@ -33,19 +33,39 @@ HexagonEye(p, q, hexelsize) = HexagonAxial(q, -p, hexelsize)
 
 
 """
-    rect2hex(im; kwargs...)
+    rect2hex(rect; hexelsize=6, pointannotation=nothing)
 
-display image on hexagonal grid
+Display rectangular array data on a hexagonal lattice visualization.
 
-`rect` - image on hexagonal grid in pq coordinates.  
+Renders data stored in a rectangular array as hexagonal tiles (hexels) arranged in the 
+natural hexagonal pattern of the optic lobe. Each array element becomes a colored hexagon
+positioned according to its (p,q) coordinate indices.
 
-`hexelsize` - radius of hexagon (center to vertex)  
+# Arguments
+- `rect`: Rectangular array containing color data for hexagonal tiles
+- `hexelsize::Int`: Radius of hexagons from center to vertex (default: 6)
+- `pointannotation::Tuple`: Optional (p,q) location to mark with cyan star
 
-`pointannotation` - (p, q) location of annotation  
+# Examples
+```julia
+# Display eye map data
+data = rand(RGB, size(pq2column))
+rect2hex(data, hexelsize=8)
 
-Hexels are stored in rectangular array, and should be colors.
+# Mark a specific location
+rect2hex(data, pointannotation=(15, 20))
 
-(1, 1) direction in pq coordinates = upward
+# Typical usage with eye data
+heatmap = eyehot(some_data)
+rect2hex(heatmap)
+```
+
+# Notes
+- Uses Luxor.jl for hexagonal rendering with 30° rotation
+- Array center is placed at origin, with (1,1) direction pointing upward
+- `missing` values in the array are skipped (not rendered)
+- Coordinate system matches optic lobe (p,q) conventions
+- Commonly used with `eyehot()` for heatmap visualization
 """
 function rect2hex(rect; hexelsize = 6, pointannotation = nothing)
     Luxor.rotate(-pi/6)
@@ -138,7 +158,41 @@ function eyergb(r::AbstractArray, g::AbstractArray, b::AbstractArray = zeros(siz
     return rgbcombined
 end
 
-## current version cuts off corners of square to make hexagon
+"""
+    square2hex(square::AbstractArray)
+
+Convert square array to hexagonal shape by masking corner regions.
+
+Transforms a square array into a hexagonal shape by setting corner regions to `missing`,
+creating a hexagonal cutout suitable for display on hexagonal lattices. The resulting
+shape approximates a hexagon by removing pixels where the row-column index difference
+exceeds half the array size.
+
+# Arguments
+- `square::AbstractArray`: Square input array to convert to hexagonal shape
+
+# Returns
+- Array of same type with corners set to `missing` to form hexagonal shape
+
+# Examples
+```julia
+# Convert square kernel to hexagonal shape
+kernel = rand(11, 11)
+hex_kernel = square2hex(kernel)
+
+# Typical usage in visualization pipeline
+data = crop(some_image, center, radius)
+hex_data = square2hex(data)
+rect2hex(hex_data)
+```
+
+# Notes
+- Used primarily for displaying kernels and cropped regions on hexagonal grids
+- Corner regions where `abs(i - j) > size(square,1)/2` are set to `missing`
+- Commonly used with `crop()` function for spatial analysis visualization
+- Essential step before `rect2hex()` for proper hexagonal display
+- Creates approximate hexagon - not perfect but visually effective
+"""
 function square2hex(square::AbstractArray) # (used to display kernel, or hexagonal cutout from eyemap)
     out = allowmissing(similar(square))
     m = floor(size(square, 1)/2)
@@ -156,7 +210,44 @@ end
 
 
 """
-    crop image
+    crop(im::Matrix, center::Vector, radius, sat=maximum(im))
+
+Extract a square region from an image centered at specified coordinates.
+
+Crops a square patch of size `(2*radius+1) × (2*radius+1)` from the input image,
+centered at the given (p,q) coordinates. Values outside the original image bounds
+are padded with zeros. The result is normalized by the saturation value.
+
+# Arguments
+- `im::Matrix`: Input image to crop from
+- `center::Vector`: [p, q] coordinates for crop center
+- `radius`: Half-width of the square crop region
+- `sat`: Saturation value for normalization (default: maximum of image)
+
+# Returns
+- Cropped and normalized square array of size `(2*radius+1, 2*radius+1)`
+
+# Examples
+```julia
+# Crop 11×11 region around a cell location
+cell_center = id2pq[some_cell_id]
+cropped = crop(connectivity_map, cell_center, 5)
+
+# Crop with custom normalization
+cropped = crop(data, [15, 20], 3, sat=1.0)
+
+# Typical workflow for hexagonal display
+patch = crop(heatmap, center, radius)
+hex_patch = square2hex(patch) 
+rect2hex(hex_patch)
+```
+
+# Notes
+- Uses `PaddedView` to handle out-of-bounds regions with zero padding
+- Normalization: divides by `sat + eps()` to prevent division by zero
+- Commonly used for extracting local connectivity patterns around cells
+- Output is suitable for `square2hex()` conversion for hexagonal visualization
+- Coordinates follow (p,q) convention matching optic lobe spatial system
 """
 function crop(im::Matrix, center::Vector, radius, sat = maximum(im))
     p, q = center[1], center[2]
@@ -171,11 +262,48 @@ end
 
 
 """
-    montage of eyemaps
-    default is row major order, and can specify column major too
+    montage(ims; hexelsize=4, fname=nothing, labels=nothing, ellipses=false, ellipsecolors=nothing, maxvals=false, fontsize=2.5*hexelsize, montagesize=nothing, centers=nothing, major="row", summary=nothing)
 
-    `ims` - 4D array WHCN. make montage C x N
-    `ims` - 3D array WHN. make montage look square, or use `montagesize`
+Create a grid layout of hexagonal eye maps for comparative visualization.
+
+Arranges multiple eye map images in a montage layout with hexagonal rendering,
+suitable for comparing connectivity patterns, cell types, or other spatial data
+across the optic lobe. Each image is displayed as a hexagonal lattice.
+
+# Arguments
+- `ims`: Vector of images or 3D/4D array to arrange in montage
+- `hexelsize::Int`: Size of hexagonal tiles (default: 4)
+- `fname::String`: Optional filename to save the montage
+- `labels::Vector`: Text labels for each image panel
+- `ellipses::Bool`: Whether to overlay ellipse fits on images
+- `ellipsecolors`: Colors for ellipse overlays
+- `maxvals::Bool`: Whether to display maximum values as text
+- `fontsize::Real`: Size of text labels (default: 2.5 × hexelsize)
+- `montagesize::Tuple`: Override automatic grid size (rows, cols)
+- `centers`: Center coordinates for cropping each image
+- `major::String`: Layout order - "row" (default) or "column" major
+- `summary`: Optional summary panel to include
+
+# Examples
+```julia
+# Basic montage of connectivity maps
+maps = [outmaps("Tm1", target) for target in ["Dm1", "Dm2", "Dm3"]]
+montage(maps, labels=["Tm1→Dm1", "Tm1→Dm2", "Tm1→Dm3"])
+
+# Save montage with custom layout
+montage(data, fname="comparison.png", montagesize=(2, 3), hexelsize=6)
+
+# Include ellipse fits and maximum values
+montage(maps, ellipses=true, maxvals=true, fontsize=12)
+```
+
+# Notes
+- Automatically determines grid layout to be approximately square if not specified
+- Uses hexagonal rendering via `rect2hex()` for each panel
+- Supports both row-major (default) and column-major ordering
+- Can handle 3D arrays (WHN) or vectors of 2D arrays
+- Essential tool for comparative analysis of spatial connectivity patterns
+- Integrates with Luxor.jl for high-quality vector graphics output
 """
 function montage(ims; hexelsize = 4, fname = nothing, labels = nothing, ellipses = false, ellipsecolors = nothing, maxvals = false, fontsize = 2.5 * hexelsize, montagesize = nothing, centers = nothing, major = "row", summary = nothing)
     m, n = size(ims[1])
