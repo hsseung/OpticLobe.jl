@@ -171,25 +171,24 @@ These are vectors of strings containing cell type names:
 All connectivity matrices are `NamedArray` objects that can be indexed by either position or name using `Name()`. For example, `W[Name(720575940599333574), Name(720575940620875399)]` or `Wtt["Tm1", "Dm3v"]`. The core connectivity data is stored as synapse counts (`Int32` values) representing the number of synaptic connections between neurons.
 
 **Cell-to-cell connectivity:**
-- `W` - Full synaptic weight matrix (sparse, ~130K × 130K cells) where `W[i, j]` is the number of synapses from neuron `i` to neuron `j`. Use this for analyzing connections between specific individual cells.
+- `W` - Full synaptic weight matrix (sparse, ~130K × 130K cells). `W[i, j]` is the number of synapses from neuron `i` to neuron `j`.
 
-**Mixed cell/type connectivity:**
-These matrices aggregate connectivity between individual cells and cell types, useful for analyzing how specific cells connect to functional groups or how types connect to individual cells:
-- `Wct` - Cell-to-type connectivity (cells × types): `Wct[cellid, typename]` gives total synapses from that cell to all cells of that type
-- `Wtc` - Type-to-cell connectivity (types × cells): `Wtc[typename, cellid]` gives total synapses from all cells of that type to the target cell
+**Cell-to-type and type-to-cell connectivity:**
+- `Wct` - Cell-to-type connectivity: `Wct[c, t]` gives total synapses from cell `c` to type `t`
+- `Wtc` - Type-to-cell connectivity: `Wtc[t, c]` gives total synapses from type `t` to cell `c`
 
 **Type-to-type connectivity:**
 Matrices that summarize connections between cell types:
-- `Wtt` - Type-to-type connectivity: `Wtt[pretype, posttype]` gives total synapses from all cells of the presynaptic type to all cells of the postsynaptic type
-- `infraction`, `outfraction` - Normalized connectivity fractions (0-1 scale): `infraction[pretype, posttype]` shows what fraction of the postsynaptic type's inputs come from the presynaptic type; `outfraction[pretype, posttype]` shows what fraction of the presynaptic type's outputs go to the postsynaptic type
-- `inmean`, `outmean` - Mean synapses per cell by type: `inmean[posttype]` gives the average number of input synapses per cell of that type; `outmean[pretype]` gives the average number of output synapses per cell of that type
+- `Wtt` - Type-to-type connectivity: `Wtt[pretype, posttype]` is raw synapse counts.
+- `infraction`, `outfraction` - Normalized versions of `Wtt` (0-1 scale).
+- `inmean`, `outmean` - Alternatve normalization of `Wtt` giving mean synapses per cell of a type.
 
 ### Cell Type Assignment
 
 Boolean matrices that encode which cells belong to which types. These sparse matrices enable efficient filtering and selection of cells by type membership:
 
-- `A` - Boolean assignment matrix (cells × all types) where `A[cell, type]` is `true` if the cell belongs to that type
-- `Ai` - Subset of `A` containing only intrinsic types (cells × intrinsic types), useful for optic lobe-focused analyses
+- `A` - Boolean matrix assigning cells to types. where `A[c, t]` is `true` if cell `c` belongs to type `t`.
+- `Ai` - Submatrix of `A` containing only intrinsic types (cells × intrinsic types).
 
 ### Type Hierarchies
 
