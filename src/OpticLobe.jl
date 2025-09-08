@@ -97,6 +97,44 @@ end
 include("inoutaverages.jl")
 export Wtt, Wct, Wtc, infraction, outfraction, inmean, outmean
 
+"""
+    W::NamedArray{Int32, 2}
+
+Main synaptic connectivity matrix where `W[i, j]` is the number of synapses from neuron `i` to neuron `j`.
+
+This is the core data structure containing synaptic connections between all neurons in the dataset.
+The matrix is sparse for memory efficiency and indexed by FlyWire root IDs using NamedArrays.
+
+# Indexing
+- By position: `W[1, 2]` - synapses from first cell to second cell  
+- By cell ID: `W[Name(720575940599333574), Name(720575940620875399)]` - synapses between specific cells
+- Row/column slicing: `W[cellid, :]` - all outputs from a cell, `W[:, cellid]` - all inputs to a cell
+
+# Examples
+```julia
+# Check connectivity between specific cells
+W[Name(720575940599333574), Name(720575940620875399)]
+
+# Get all postsynaptic partners of a cell (with synapse counts)
+outputs = W[Name(720575940599333574), :]
+top_targets = sort(outputs, rev=true)[1:10]
+
+# Get all presynaptic partners of a cell  
+inputs = W[:, Name(720575940620875399)]
+top_sources = sort(inputs, rev=true)[1:10]
+
+# Total output/input synapse counts for a cell
+total_out = sum(W[Name(720575940599333574), :])
+total_in = sum(W[:, Name(720575940620875399)])
+```
+
+# Notes
+- Sparse matrix (~130K × 130K cells, ~77M synapses for Princeton version)
+- Autapses (self-connections) are set to zero  
+- T1 cell outputs are zeroed based on prior biological knowledge
+- Synapse version depends on package configuration (Princeton or Buhmann)
+- Use `W_Princeton` and `W_Buhmann` if both versions are loaded
+"""
 W = NamedArray(W, names = (ind2id, ind2id), dimnames = ("cellid", "cellid"))
 if @load_preference("load_both_synapses", false)
     global W_Buhmann = NamedArray(W_Buhmann, names = (ind2id, ind2id), dimnames = ("cellid", "cellid"))
