@@ -19,9 +19,6 @@
 #
 # - `ind2id` - `Int64` cell IDs in canonical order corresponding to indices of weight matrix
 # - `id2ind` - dictionary for looking up `Int32` index corresponding to a cell ID.
-#
-# These variables are written to `jldfilename`, which should be specified prior to running this script
-# If not specified, this defaults to `cellids.jld2` in the working directory.
 
 # %%
 using CSV, DataFrames

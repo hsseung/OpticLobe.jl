@@ -247,4 +247,79 @@ Wct = NamedArray(Wct, names = (ind2id, alltypes), dimnames = ("cellid", "celltyp
 Wtc = NamedArray(Wtc, names = (alltypes, ind2id), dimnames = ("celltype", "cellid"))      # type to type
 
 # compute importance after this correction
+"""
+    importance::NamedArray{Float32, 2}
+
+Connection importance from either presynaptic or postsynaptic perspective.
+
+Matrix where `importance[pretype, posttype]` gives the maximum of:
+- `infraction`: fraction of postsynaptic type's inputs (important to postsynaptic type)
+- `outfraction`: fraction of presynaptic type's outputs (important to presynaptic type)
+
+This identifies connections that are significant to at least one of the partner types.
+
+# Examples
+```julia
+importance["Tm1", "Dm3v"]     # Importance of Tm1→Dm3v connection
+importance["Tm1", :]          # Importance of all Tm1 output connections
+importance[:, "Dm3v"]         # Importance of all Dm3v input connections
+```
+
+# Notes
+- Computed as `max.(infraction, outfraction)`
+- Values range from 0.0 to 1.0
+- High values indicate the connection is a major pathway for at least one partner
+- A connection can be important even if asymmetric (e.g., major output for pre, minor input for post)
+"""
 importance = max.(infraction, outfraction)
+
+# %%
+"""
+    inrank::NamedArray{Int64, 2}
+
+Rank ordering of presynaptic inputs for each postsynaptic intrinsic type.
+
+Matrix where `inrank[pretype, posttype]` gives the rank of `pretype` among all 
+presynaptic partners of `posttype`, based on mean synapse count per postsynaptic cell.
+Rank 1 indicates the strongest input partner.
+
+# Examples
+```julia
+inrank["Tm1", "Dm3v"]         # Rank of Tm1 among Dm3v's input partners
+inrank[:, "Dm3v"]             # All input ranks for Dm3v (1 = strongest)
+findall(inrank[:, "Dm3v"] .== 1)  # Strongest input partner(s) to Dm3v
+```
+
+# Notes
+- Only includes intrinsic types (not boundary/central/visual types)
+- Based on `inmean` values (mean synapses per postsynaptic cell)
+- Lower rank numbers indicate stronger connections
+- Computed using `ordinalrank` with `rev=true` (highest mean gets rank 1)
+"""
+inrank = stack(ordinalrank.(eachcol(collect(inmean[intrinsictypes, intrinsictypes])), rev=true), dims=2)
+inrank = NamedArray(inrank, (intrinsictypes, intrinsictypes))
+
+"""
+    outrank::NamedArray{Int64, 2}
+
+Rank ordering of postsynaptic outputs for each presynaptic intrinsic type.
+
+Matrix where `outrank[pretype, posttype]` gives the rank of `posttype` among all 
+postsynaptic partners of `pretype`, based on mean synapse count per presynaptic cell.
+Rank 1 indicates the strongest output partner.
+
+# Examples
+```julia
+outrank["Tm1", "Dm3v"]        # Rank of Dm3v among Tm1's output partners
+outrank["Tm1", :]             # All output ranks for Tm1 (1 = strongest)
+findall(outrank["Tm1", :] .== 1)  # Strongest output partner(s) of Tm1
+```
+
+# Notes
+- Only includes intrinsic types (not boundary/central/visual types)
+- Based on `outmean` values (mean synapses per presynaptic cell)
+- Lower rank numbers indicate stronger connections
+- Computed using `ordinalrank` with `rev=true` (highest mean gets rank 1)
+"""
+outrank = stack(ordinalrank.(eachrow(collect(outmean[intrinsictypes, intrinsictypes])), rev=true), dims=1)
+outrank = NamedArray(outrank, (intrinsictypes, intrinsictypes))

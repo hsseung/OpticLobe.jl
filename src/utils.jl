@@ -30,96 +30,175 @@ showall = x->show(stdout, "text/plain", x)
 # BEWARE first version returns fraction of synapses, second version returns number of synapses
 
 """
-    toppost(celltype::String; sort=:out, nresults=15)
+    toppost(celltype::String; sort=:out, nresults=15, values=:fraction)
 
-Display top postsynaptic partners of a cell type with connectivity fractions.
+Display top postsynaptic partners of a cell type with connectivity fractions or mean synapse counts.
 
-Shows the strongest postsynaptic connections from a given cell type, displaying both 
-output fractions (what fraction of the presynaptic type's outputs go to each target) 
-and input fractions (what fraction of each target's inputs come from the presynaptic type).
+Shows the strongest postsynaptic connections from a given cell type, displaying either:
+- Connectivity fractions: output/input fractions as percentages
+- Mean synapse counts: average number of synapses per cell
 
 # Arguments
 - `celltype::String`: Name of the presynaptic cell type
-- `sort::Symbol`: Sort by `:out` (output fraction) or `:in` (input fraction). Default `:out`.
+- `sort::Symbol`: Sort by `:out` (output) or `:in` (input). Default `:out`.
 - `nresults::Int`: Number of top connections to display. Default 15.
+- `values::Symbol`: Display `:fraction` (percentages) or `:mean` (synapse counts). Default `:fraction`.
 
 # Examples
 ```julia
-toppost("Tm1")                    # Top 15 Tm1 postsynaptic partners (sorted by output fraction)
-toppost("Tm1", sort=:in)          # Sorted by input fraction instead
-toppost("Dm3v", nresults=10)      # Show only top 10 connections
+toppost("Tm1")                           # Top 15 Tm1 postsynaptic partners (output fractions)
+toppost("Tm1", sort=:in)                 # Sorted by input fraction instead
+toppost("Dm3v", nresults=10)             # Show only top 10 connections
+toppost("Tm1", values=:mean)             # Show mean synapse counts instead of fractions
+toppost("Tm1", values=:mean, sort=:in)  # Sort by input mean
 ```
 
 # Output
 Pretty-printed table with:
 - Row headers: postsynaptic cell type names
-- "out" column: percentage of presynaptic type's outputs going to each target
-- "in" column: percentage of each target's inputs coming from presynaptic type
+- When `values=:fraction`:
+  - "out" column: percentage of presynaptic type's outputs going to each target
+  - "in" column: percentage of each target's inputs coming from presynaptic type
+- When `values=:mean`:
+  - "out" column: mean synapses per presynaptic cell to each target type
+  - "in" column: mean synapses per postsynaptic cell from presynaptic type
 
 # Notes
-- Uses `outfraction` and `infraction` matrices
-- Output adapts to IJulia (HTML) vs REPL (text) environments
-- Percentages are displayed as integers (0-100)
+- Uses `outfraction`/`infraction` matrices for fractions, `outmean`/`inmean` for means
+- Output adapts to environment: HTML tables in IJulia, text tables in REPL or Emacs
+- Fractions displayed as percentages (0-100), means as floating point values
 """
-function toppost(celltype::String; sort=:out, nresults = 15)
-    backend = isdefined(Main, :IJulia) && Main.IJulia.inited ? Val(:html) : Val(:text)
-    if sort == :in
-        perm = sortperm(infraction[celltype, :], rev=true)
+function toppost(celltype::String; sort=:out, nresults = 15, values=:fraction)
+    if values == :mean
+        # Use mean matrices
+        if sort == :in
+            perm = sortperm(inmean[celltype, :], rev=true)
+        else
+            perm = sortperm(outmean[celltype, :], rev=true)
+        end
+        data = [outmean[celltype, perm[1:nresults]] inmean[celltype, perm[1:nresults]]]
+        formatter = ft_printf("%.1f")
+        col_headers = ["out #", "in #"]
     else
-        perm = sortperm(outfraction[celltype, :], rev=true)
+        # Use fraction matrices (default)
+        if sort == :in
+            perm = sortperm(infraction[celltype, :], rev=true)
+        else
+            perm = sortperm(outfraction[celltype, :], rev=true)
+        end
+        data = [outfraction[celltype, perm[1:nresults]] infraction[celltype, perm[1:nresults]]]
+        data = 100*data  # Convert to percentages
+        formatter = ft_printf("%2d")
+        col_headers = ["out %", "in %"]
     end
-    data = [outfraction[celltype, perm[1:nresults]] infraction[celltype, perm[1:nresults]]]
-    pretty_table(hcat(["out", "in"], 100*data');
+    
+    # Choose backend based on environment
+    if detect_emacs_jupyter()
+        backend = Val(:text)
+    elseif isdefined(Main, :IJulia) && Main.IJulia.inited
+        backend = Val(:html)
+    else
+        backend = Val(:text)
+    end
+    
+    pretty_table(hcat(col_headers, data');
         header = vcat([celltype*"-post"], names(outfraction)[1][perm[1:nresults]]), 
         backend = backend, 
-        formatters = ft_printf("%2d")
+        formatters = formatter
     )
 end
 
 """
-    toppre(celltype::String; sort=:in, nresults=15)
+    toppre(celltype::String; sort=:in, nresults=15, values=:fraction)
 
-Display top presynaptic partners of a cell type with connectivity fractions.
+Display top presynaptic partners of a cell type with connectivity fractions or mean synapse counts.
 
-Shows the strongest presynaptic connections to a given cell type, displaying both 
-input fractions (what fraction of the postsynaptic type's inputs come from each source) 
-and output fractions (what fraction of each source's outputs go to the postsynaptic type).
+Shows the strongest presynaptic connections to a given cell type, displaying either:
+- Connectivity fractions: input/output fractions as percentages
+- Mean synapse counts: average number of synapses per cell
 
 # Arguments
 - `celltype::String`: Name of the postsynaptic cell type
-- `sort::Symbol`: Sort by `:in` (input fraction) or `:out` (output fraction). Default `:in`.
+- `sort::Symbol`: Sort by `:in` (input) or `:out` (output). Default `:in`.
 - `nresults::Int`: Number of top connections to display. Default 15.
+- `values::Symbol`: Display `:fraction` (percentages) or `:mean` (synapse counts). Default `:fraction`.
 
 # Examples
 ```julia
-toppre("Dm3v")                    # Top 15 Dm3v presynaptic partners (sorted by input fraction)
-toppre("Dm3v", sort=:out)         # Sorted by output fraction instead
-toppre("T2a", nresults=10)        # Show only top 10 connections
+toppre("Dm3v")                          # Top 15 Dm3v presynaptic partners (input fractions)
+toppre("Dm3v", sort=:out)               # Sorted by output fraction instead
+toppre("T2a", nresults=10)              # Show only top 10 connections
+toppre("Dm3v", values=:mean)            # Show mean synapse counts instead of fractions
+toppre("Dm3v", values=:mean, sort=:out) # Sort by output mean
 ```
 
 # Output
 Pretty-printed table with:
 - Row headers: presynaptic cell type names
-- "in" column: percentage of postsynaptic type's inputs coming from each source
-- "out" column: percentage of each source's outputs going to postsynaptic type
+- When `values=:fraction`:
+  - "in" column: percentage of postsynaptic type's inputs coming from each source
+  - "out" column: percentage of each source's outputs going to postsynaptic type
+- When `values=:mean`:
+  - "in" column: mean synapses per postsynaptic cell from each presynaptic type
+  - "out" column: mean synapses per presynaptic cell to postsynaptic type
 
 # Notes
-- Uses `infraction` and `outfraction` matrices
-- Output adapts to IJulia (HTML) vs REPL (text) environments
-- Percentages are displayed as integers (0-100)
+- Uses `infraction`/`outfraction` matrices for fractions, `inmean`/`outmean` for means
+- Output adapts to environment: HTML tables in IJulia, text tables in REPL or Emacs
+- Fractions displayed as percentages (0-100), means as floating point values
 """
-function toppre(celltype::String; sort=:in, nresults = 15)
-    backend = isdefined(Main, :IJulia) && Main.IJulia.inited ? Val(:html) : Val(:text)
-    if sort == :out
-        perm = sortperm(outfraction[:, celltype], rev=true)
-    else
-        perm = sortperm(infraction[:, celltype], rev=true)
+function detect_emacs_jupyter()
+    # Check if parent process contains "emacs"
+    try
+        if Sys.islinux() || Sys.isapple()
+            # Get parent process info
+            ppid = @ccall getppid()::Cint
+            parent_cmd = read(`ps -p $ppid -o comm=`, String) |> strip
+            return occursin("emacs", lowercase(parent_cmd))
+        end
+    catch
+        # Fallback if ps command fails
     end
-    data = [infraction[perm[1:nresults], celltype] outfraction[perm[1:nresults], celltype]]
-    pretty_table(hcat(["in", "out"], 100*data');
+    return false
+end
+
+function toppre(celltype::String; sort=:in, nresults = 15, values=:fraction)
+    if values == :mean
+        # Use mean matrices
+        if sort == :out
+            perm = sortperm(outmean[:, celltype], rev=true)
+        else
+            perm = sortperm(inmean[:, celltype], rev=true)
+        end
+        data = [inmean[perm[1:nresults], celltype] outmean[perm[1:nresults], celltype]]
+        formatter = ft_printf("%.1f")
+        col_headers = ["in #", "out #"]
+    else
+        # Use fraction matrices (default)
+        if sort == :out
+            perm = sortperm(outfraction[:, celltype], rev=true)
+        else
+            perm = sortperm(infraction[:, celltype], rev=true)
+        end
+        data = [infraction[perm[1:nresults], celltype] outfraction[perm[1:nresults], celltype]]
+        data = 100*data  # Convert to percentages
+        formatter = ft_printf("%2d")
+        col_headers = ["in %", "out %"]
+    end
+    
+    # Choose backend based on environment
+    if detect_emacs_jupyter()
+        backend = Val(:text)
+    elseif isdefined(Main, :IJulia) && Main.IJulia.inited
+        backend = Val(:html)
+    else
+        backend = Val(:text)
+    end
+    
+    pretty_table(hcat(col_headers, data');
         header = vcat([celltype*"-pre"], names(infraction)[1][perm[1:nresults]]), 
         backend = backend, 
-        formatters = ft_printf("%2d")
+        formatters = formatter
     )
 end
 

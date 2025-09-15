@@ -181,7 +181,9 @@ All connectivity matrices are `NamedArray` objects that can be indexed by either
 Matrices that summarize connections between cell types:
 - `Wtt` - Type-to-type connectivity: `Wtt[pretype, posttype]` is raw synapse counts.
 - `infraction`, `outfraction` - Normalized versions of `Wtt` (0-1 scale).
-- `inmean`, `outmean` - Alternatve normalization of `Wtt` giving mean synapses per cell of a type.
+- `inmean`, `outmean` - Alternative normalization of `Wtt` giving mean synapses per cell of a type.
+- `importance` - Connection importance: `max(infraction, outfraction)` for each connection.
+- `inrank`, `outrank` - Rank ordering of connections by strength (intrinsic types only).
 
 ### Cell Type Assignment
 
@@ -202,8 +204,8 @@ The visual system types are organized in a three-level hierarchy: **classes** â†
 ### Analysis Functions
 
 Basic functions for exploring connectivity patterns and cell properties:
-- `toppre(celltype, n)` - Top n presynaptic partners of a cell type
-- `toppost(cellid, n)` - Top n postsynaptic partners of a cell  
+- `toppre(celltype; nresults=15, sort=:in, values=:fraction)` - Top presynaptic partners of a cell type
+- `toppost(celltype; nresults=15, sort=:out, values=:fraction)` - Top postsynaptic partners of a cell type  
 - `type2ids(typename; side="right")` - Get all cell IDs belonging to a cell type
 - `showall(vector)` - Display all elements of a named vector
 - `inmaps(paths)` - Convert connectivity matrix to spatial input maps (receptive fields)
