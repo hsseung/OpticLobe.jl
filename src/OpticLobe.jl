@@ -95,7 +95,7 @@ if @load_preference("load_both_synapses", false)
 end
 
 include("inoutaverages.jl")
-export Wtt, Wct, Wtc, infraction, outfraction, inmean, outmean
+export Wtt, Wct, Wtc, infraction, outfraction, inmean, outmean, importance, inrank, outrank
 
 """
     W::NamedArray{Int32, 2}
