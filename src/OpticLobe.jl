@@ -195,7 +195,7 @@ export id2pq, pq2column
 
 include("hexgraphics.jl")
 export rect2hex, square2hex, crop, montage
-export eyehot
+export eyehot, eyeheat
 export triad, eyetriad, typetriad, celltriad
 export ellipsesummary, drawellipse
 export hexproject, drawpqaxes, hexannulus
@@ -209,5 +209,8 @@ export preimage, prepreimage, preprepreimage # legacy code superseded by `inmaps
 include("spatial.jl")
 export findcenter, convcluster
 export seven
+
+include("stimuli.jl")
+export sine_grating
 
 end
