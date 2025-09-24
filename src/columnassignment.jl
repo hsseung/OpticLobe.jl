@@ -70,6 +70,29 @@ cells_at_pq = [id for (id, coord) in id2pq if coord == [10, 15]]
 """
 id2pq = Dict(visualcolumns.root_id .=> map(collect, eachrow(pq)))
 
+# compute R1-6 locations, which are not included in Codex downloads
+for sourceid in type2ids("R1-6")
+    try
+        sourceind =  id2ind(sourceid)
+        ids = ind2id[W[sourceind, :] .> 0]   # ids of postsynaptic targets
+        locs = id2pq.(ids)
+        locexists = .!ismissing.(locs)  # some postsynaptic locations could be missing
+        if count(locexists) > 0
+            locs = locs[locexists]
+            ids = ids[locexists]
+            id2pq[sourceid] = argmax(countmap(locs, W[sourceind, Name.(ids)].array))  # location of postsynaptic targets with maximal weight
+        else
+            println(sourceid)
+            id2pq[sourceid] = missing
+        end
+    catch e
+        println("Error occurred at sourceid = $sourceid")
+        println("Error: $e")
+        rethrow(e)
+    end
+end
+
+
 # Note that pq2column is only defined at present for the right eye
 # Create OffsetArray for right hemisphere columns indexed by p and q
 using OffsetArrays
