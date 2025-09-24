@@ -233,7 +233,7 @@ Functions for viewing cells in external tools and preparing data for plotting. T
 
 Tools for working with the hexagonal column coordinate system of the optic lobe and creating spatial visualizations. The optic lobe uses a hexagonal lattice where each column has (p,q) coordinates:
 
-- `id2pq[cellid]` - Map cell IDs to hexagonal (p,q) column coordinates 
+- `id2pq[cellid]` - Map cell IDs to hexagonal (p,q) column coordinates
 - `pq2column[p, q]` - Map hex coordinates to column IDs (right hemisphere only)
 - `crop(image, center, radius; sat)` - Extract square region from image centered at coordinates
 - `square2hex(square)` - Convert square array to hexagonal shape by masking corners
@@ -241,6 +241,44 @@ Tools for working with the hexagonal column coordinate system of the optic lobe 
 - `montage(images; hexelsize, labels, ellipses, ...)` - Create grid layout of hexagonal eye maps
 - `triad(celltype)` - Generate spatial triad visualization for cell type
 - Hexagonal visualization tools in `hexgraphics` module
+
+#### Hexagonal Coordinate System
+
+The optic lobe uses a hexagonal lattice coordinate system (known as "Zhao's eye coordinates") where each column has (p,q) coordinates. The coordinate system is defined as follows:
+
+**Anatomical Orientation** (for right eye):
+```
+         dorsal
+           ^
+           |
+anterior <-+-> posterior
+           |
+           v
+        ventral
+```
+
+**Hexagonal Grid Axes:**
+- `+p` direction is **anterodorsal**
+- `+q` direction is **posterodorsal**
+- `+v` direction is **dorsal**
+- `+h` direction is **posterior**
+
+```
++p   +v   +q
+ \   |   /
+  \  |  /
+   \ | /
+    \|/
+     +----- +h
+```
+
+**Key Properties:**
+- The `+p` and `+q` directions are approximately 90° apart (120° on perfect hexagonal grid)
+- Column coordinates are integers representing discrete positions on the lattice
+- Only the right hemisphere is fully mapped in `pq2column`
+- Missing values indicate positions without columns (gaps in the eye)
+
+**Reference:** This coordinate system is defined in Figure 2 of Arthur Zhao et al. 2022. The coordinate transformations and visualizations use this system throughout the package.
 
 ### Cell Properties
 
