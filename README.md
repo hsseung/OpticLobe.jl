@@ -225,8 +225,10 @@ Functions for analyzing multi-step synaptic pathways with hemisphere-specific fi
 Functions for viewing cells in external tools and preparing data for plotting. The FlyWire integration functions automatically detect your environment (Jupyter vs REPL) and adapt their behavior accordingly:
 
 - `codex_open(cellids; version=783)` - Open cells in FlyWire Codex browser (works in both Jupyter and REPL)
-- `ng_open(cellids; version=783)` - Open cells in Neuroglancer 3D viewer (works in both Jupyter and REPL)
-- `ng_hyper(cellids; anchor, version=783)` - Create clickable Neuroglancer hyperlinks (Jupyter) or print URLs (REPL)
+- `ng_open(cellids; version=783, darkmode=false)` - Open cells in Neuroglancer 3D viewer (works in both Jupyter and REPL)
+- `ng_open(idlists; version=783, names=nothing, darkmode=false)` - Open multiple segmentation layers for comparing cell groups
+- `ng_hyper(cellids; anchor, version=783, darkmode=false)` - Create clickable Neuroglancer hyperlinks (Jupyter) or print URLs (REPL)
+- `ng_hyper(idlists; anchor, names=nothing, version=783, darkmode=false)` - Create hyperlink with multiple segmentation layers
 - `strings2ticks(strings)` - Convert string vector to (positions, labels) for plot tick marks
 
 ### Spatial Analysis
